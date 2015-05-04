@@ -91,8 +91,10 @@
             this.Controls.Add(this.connectTwitchButton);
             this.Controls.Add(this.doneButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.MaximizeBox = false;
             this.Name = "WelcomeForm";
             this.Text = "Welcome";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.WelcomeForm_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 

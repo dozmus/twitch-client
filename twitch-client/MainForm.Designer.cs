@@ -32,15 +32,19 @@
             this.masterStatusStrip = new System.Windows.Forms.StatusStrip();
             this.mainStatsLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.masterMenuStrip = new System.Windows.Forms.MenuStrip();
+            this.updatingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toggleMainStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toggleFollowersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.broadcastingTabPage = new System.Windows.Forms.TabPage();
-            this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.followersRichTextBox = new System.Windows.Forms.RichTextBox();
-            this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.followersTextBox = new System.Windows.Forms.TextBox();
             this.watchStreamPanel = new TwitchClient.Panels.WatchStreamPanel();
             this.updateBroadcastingInfoPanel = new TwitchClient.Panels.UpdateBroadcastingInfoPanel();
             this.broadcastingInfoPanel = new TwitchClient.Panels.BroadcastingInfoPanel();
+            this.updateTimer = new System.Windows.Forms.Timer(this.components);
+            this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.masterStatusStrip.SuspendLayout();
+            this.masterMenuStrip.SuspendLayout();
             this.tabControl.SuspendLayout();
             this.broadcastingTabPage.SuspendLayout();
             this.SuspendLayout();
@@ -51,9 +55,8 @@
             this.mainStatsLabel});
             this.masterStatusStrip.Location = new System.Drawing.Point(0, 423);
             this.masterStatusStrip.Name = "masterStatusStrip";
-            this.masterStatusStrip.Size = new System.Drawing.Size(534, 22);
+            this.masterStatusStrip.Size = new System.Drawing.Size(549, 22);
             this.masterStatusStrip.TabIndex = 0;
-            this.masterStatusStrip.Text = "statusStrip1";
             // 
             // mainStatsLabel
             // 
@@ -63,12 +66,39 @@
             // 
             // masterMenuStrip
             // 
+            this.masterMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.updatingToolStripMenuItem});
             this.masterMenuStrip.Location = new System.Drawing.Point(0, 0);
             this.masterMenuStrip.Name = "masterMenuStrip";
-            this.masterMenuStrip.Size = new System.Drawing.Size(534, 24);
+            this.masterMenuStrip.Size = new System.Drawing.Size(549, 24);
             this.masterMenuStrip.TabIndex = 1;
-            this.masterMenuStrip.Text = "menuStrip1";
-            this.masterMenuStrip.Resize += new System.EventHandler(this.masterMenuStrip_Resize);
+            // 
+            // updatingToolStripMenuItem
+            // 
+            this.updatingToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toggleMainStatsToolStripMenuItem,
+            this.toggleFollowersToolStripMenuItem});
+            this.updatingToolStripMenuItem.Name = "updatingToolStripMenuItem";
+            this.updatingToolStripMenuItem.Size = new System.Drawing.Size(68, 20);
+            this.updatingToolStripMenuItem.Text = "Updating";
+            // 
+            // toggleMainStatsToolStripMenuItem
+            // 
+            this.toggleMainStatsToolStripMenuItem.Checked = true;
+            this.toggleMainStatsToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.toggleMainStatsToolStripMenuItem.Name = "toggleMainStatsToolStripMenuItem";
+            this.toggleMainStatsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.toggleMainStatsToolStripMenuItem.Text = "Main Stats";
+            this.toggleMainStatsToolStripMenuItem.Click += new System.EventHandler(this.mainStatsToolStripMenuItem_Click);
+            // 
+            // toggleFollowersToolStripMenuItem
+            // 
+            this.toggleFollowersToolStripMenuItem.Checked = true;
+            this.toggleFollowersToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.toggleFollowersToolStripMenuItem.Name = "toggleFollowersToolStripMenuItem";
+            this.toggleFollowersToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.toggleFollowersToolStripMenuItem.Text = "Followers";
+            this.toggleFollowersToolStripMenuItem.Click += new System.EventHandler(this.followersToolStripMenuItem_Click);
             // 
             // tabControl
             // 
@@ -77,48 +107,36 @@
             this.tabControl.Location = new System.Drawing.Point(0, 24);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(534, 399);
+            this.tabControl.Size = new System.Drawing.Size(549, 399);
             this.tabControl.TabIndex = 2;
             // 
             // broadcastingTabPage
             // 
-            this.broadcastingTabPage.Controls.Add(this.followersRichTextBox);
+            this.broadcastingTabPage.Controls.Add(this.followersTextBox);
             this.broadcastingTabPage.Controls.Add(this.watchStreamPanel);
             this.broadcastingTabPage.Controls.Add(this.updateBroadcastingInfoPanel);
             this.broadcastingTabPage.Controls.Add(this.broadcastingInfoPanel);
             this.broadcastingTabPage.Location = new System.Drawing.Point(4, 22);
             this.broadcastingTabPage.Name = "broadcastingTabPage";
             this.broadcastingTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.broadcastingTabPage.Size = new System.Drawing.Size(526, 373);
+            this.broadcastingTabPage.Size = new System.Drawing.Size(541, 373);
             this.broadcastingTabPage.TabIndex = 0;
             this.broadcastingTabPage.Text = "Broadcasting";
             this.broadcastingTabPage.UseVisualStyleBackColor = true;
             // 
-            // updateTimer
+            // followersTextBox
             // 
-            this.updateTimer.Interval = 2500;
-            this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
-            // 
-            // followersRichTextBox
-            // 
-            this.followersRichTextBox.BackColor = System.Drawing.SystemColors.Window;
-            this.followersRichTextBox.Location = new System.Drawing.Point(346, 3);
-            this.followersRichTextBox.Name = "followersRichTextBox";
-            this.followersRichTextBox.ReadOnly = true;
-            this.followersRichTextBox.Size = new System.Drawing.Size(177, 147);
-            this.followersRichTextBox.TabIndex = 3;
-            this.followersRichTextBox.Text = "";
-            // 
-            // followersUpdateTimer
-            // 
-            this.followersUpdateTimer.Interval = 5000;
-            this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
+            this.followersTextBox.Location = new System.Drawing.Point(346, 3);
+            this.followersTextBox.Multiline = true;
+            this.followersTextBox.Name = "followersTextBox";
+            this.followersTextBox.Size = new System.Drawing.Size(192, 147);
+            this.followersTextBox.TabIndex = 4;
             // 
             // watchStreamPanel
             // 
-            this.watchStreamPanel.Location = new System.Drawing.Point(8, 156);
+            this.watchStreamPanel.Location = new System.Drawing.Point(3, 156);
             this.watchStreamPanel.Name = "watchStreamPanel";
-            this.watchStreamPanel.Size = new System.Drawing.Size(512, 211);
+            this.watchStreamPanel.Size = new System.Drawing.Size(535, 211);
             this.watchStreamPanel.TabIndex = 2;
             // 
             // updateBroadcastingInfoPanel
@@ -135,21 +153,35 @@
             this.broadcastingInfoPanel.Size = new System.Drawing.Size(300, 60);
             this.broadcastingInfoPanel.TabIndex = 0;
             // 
+            // updateTimer
+            // 
+            this.updateTimer.Interval = 2500;
+            this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
+            // 
+            // followersUpdateTimer
+            // 
+            this.followersUpdateTimer.Interval = 5000;
+            this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(534, 445);
+            this.ClientSize = new System.Drawing.Size(549, 445);
             this.Controls.Add(this.tabControl);
             this.Controls.Add(this.masterStatusStrip);
             this.Controls.Add(this.masterMenuStrip);
             this.MainMenuStrip = this.masterMenuStrip;
             this.Name = "MainForm";
             this.Text = "twitch-client";
+            this.Resize += new System.EventHandler(this.MainForm_Resize);
             this.masterStatusStrip.ResumeLayout(false);
             this.masterStatusStrip.PerformLayout();
+            this.masterMenuStrip.ResumeLayout(false);
+            this.masterMenuStrip.PerformLayout();
             this.tabControl.ResumeLayout(false);
             this.broadcastingTabPage.ResumeLayout(false);
+            this.broadcastingTabPage.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -166,8 +198,11 @@
         private System.Windows.Forms.Timer updateTimer;
         private System.Windows.Forms.ToolStripStatusLabel mainStatsLabel;
         private Panels.WatchStreamPanel watchStreamPanel;
-        private System.Windows.Forms.RichTextBox followersRichTextBox;
         private System.Windows.Forms.Timer followersUpdateTimer;
+        private System.Windows.Forms.TextBox followersTextBox;
+        private System.Windows.Forms.ToolStripMenuItem updatingToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toggleMainStatsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toggleFollowersToolStripMenuItem;
     }
 }
 

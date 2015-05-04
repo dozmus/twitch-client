@@ -33,6 +33,15 @@ namespace TwitchClient
             get { return twitchUsernameTextBox.Text; }
         }
 
+        private void WelcomeForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Quitting the application completely, if the user presses the close button
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                Application.Exit();
+            }
+        }
+
         private void connectTwitchButton_Click(object sender, EventArgs e)
         {
             // Starting the response server listener
@@ -66,7 +75,7 @@ namespace TwitchClient
             }
 
             // Fall-back, good call procedure
-            Close();
+            Hide();
         }
 
         private void InitializeResponseServer(IPAddress ip, int port)
@@ -149,6 +158,7 @@ namespace TwitchClient
             }
 
             // Updating status, etc
+            _listener.Close();
             Debug.WriteLine("Remote http socket closed.");
             SetStatus("Done");
         }
