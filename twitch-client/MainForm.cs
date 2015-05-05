@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using TwitchClient.ChatBot;
 using TwitchClient.Json;
 
 namespace TwitchClient
@@ -16,8 +17,13 @@ namespace TwitchClient
         private readonly WebClient _baseChannelJsonObjectClient = new WebClient();
         private readonly WebClient _followersJsonObjectClient = new WebClient();
         private readonly WelcomeForm _welcomeForm = new WelcomeForm();
+        private readonly IrcBot _ircBot;
         private bool _updatingFollowers;
         private bool _updatingBaseStats;
+
+        // TODO handle async download failure, i.e. mark flags as available so update occurs next timer tick
+        // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
+        // TODO add feature to remove echo commands/random notifications
 
         #region Initialisation
         public MainForm()
@@ -49,19 +55,37 @@ namespace TwitchClient
 
             followersUpdateTimer.Start();
             followersUpdateTimer_Tick(this, EventArgs.Empty);
+
+            // Initialising the irc bot class
+            _ircBot = new IrcBot(chatRichTextBox, chatUsersListBox);
         }
 
         private void InitializeCustomControls()
         {
             // Update broadcasting info button click
-            updateBroadcastingInfoPanel.updateButton.Click += updateBroadcastingInfoButton_Click;
+            updateBroadcastingInfoPanel.updateButton.Click += updateBroadcastingInfoUpdateButton_Click;
+
+            // Connect irc bot button click
+            chatBotCredentialsPanel.connectButton.Click += chatBotCredentialsPanelConnectButton_Click;
 
             // Loading preview page
+#if DEBUG
+            watchStreamPanel.SetBrowserHtml("<!DOCTYPE html><html><body style=\"background-color:#000;font-size:32px;color:#fff;\">Stream preview here.</body></html>");
+#else
             watchStreamPanel.Navigate("http://www.twitch.tv/" + _welcomeForm.TwitchUsername + "/popout");
+#endif
         }
         #endregion
 
-        private void updateBroadcastingInfoButton_Click(object sender, EventArgs e)
+        #region Custom control bindings
+        private void chatBotCredentialsPanelConnectButton_Click(object sender, EventArgs e)
+        {
+            // TODO verify input, listen to init response
+            _ircBot.Init(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password, _welcomeForm.TwitchUsername,
+                chatBotCredentialsPanel.Hostname, chatBotCredentialsPanel.Port);
+        }
+
+        private void updateBroadcastingInfoUpdateButton_Click(object sender, EventArgs e)
         {
             // Preparing request
             // TODO only send info which is to be updated, ie if textbox is empty
@@ -83,6 +107,7 @@ namespace TwitchClient
             }
             */
         }
+        #endregion
 
         #region Timer tick/start/stop events
         private void updateTimer_Tick(object sender, EventArgs e)
@@ -173,9 +198,9 @@ namespace TwitchClient
             followersTextBox.Invoke((MethodInvoker)(() => followersTextBox.Text = text));
             _updatingFollowers = false;
 
-            #if DEBUG
+#if DEBUG
             Debug.WriteLine("Completed Task(UPDATE_RECENT_FOLLOWERS)");
-            #endif
+#endif
         }
         #endregion
 
@@ -218,13 +243,13 @@ namespace TwitchClient
 
             _updatingBaseStats = false;
 
-            #if DEBUG
+#if DEBUG
             Debug.WriteLine("Completed Task(UPDATE_BASE_STATS)");
-            #endif
+#endif
         }
         #endregion
 
-        #region Updating UI info display
+        #region Updating UI info
         private void UpdateMainStatsLabel(BaseChannelJsonObject.Stream stream)
         {
             string text = String.Format("Viewers: {0} | Followers: {1} | Views: {2}", stream.viewers,
@@ -255,6 +280,57 @@ namespace TwitchClient
 
             // Followers text box
             followersTextBox.Size = new Size(Size.Width - 373, followersTextBox.Size.Height);
+        }
+        #endregion
+
+        #region Chat bot settings UI events
+        private void addEchoCommandButton_Click(object sender, EventArgs e)
+        {
+            // Trying to add command to dictionary
+            string echoMessage = newEchoCommandTextBox.Text;
+            int colonIndex = echoMessage.IndexOf(':');
+
+            string commandName = echoMessage.Substring(0, colonIndex);
+            string message = echoMessage.Substring(colonIndex + 1);
+
+            lock (IrcBot.EchoCommands)
+            {
+                // Checking if we can add the entry to the dictionary
+                if (IrcBot.EchoCommands.ContainsKey(commandName))
+                {
+                    return; // XXX failure, TODO tell user
+                }
+
+                // Adding the entry
+                IrcBot.EchoCommands.Add(commandName, message);
+                IrcBot.EchoCommandsCooldown.Add(commandName, 0); // adding and 'resetting' cooldown
+            }
+
+            // Adding command to list box - assuming success if we got this far
+            echoCommandsListBox.Items.Add(newEchoCommandTextBox.Text);
+            newEchoCommandTextBox.Text = "";
+        }
+
+        private void addRandomNotificationButton_Click(object sender, EventArgs e)
+        {
+            // Trying to add item to list
+            string message = newRandomNotificationTextBox.Text;
+
+            lock (IrcBot.RandomNotifications)
+            {
+                // Checking if we can add the entry to the dictionary
+                if (IrcBot.RandomNotifications.Contains(message))
+                {
+                    return; // XXX failure, TODO tell user
+                }
+
+                // Adding the entry
+                IrcBot.RandomNotifications.Add(message);
+            }
+
+            // Adding command to list box - assuming success if we got this far
+            randomNotificationsListBox.Items.Add(newRandomNotificationTextBox.Text);
+            newRandomNotificationTextBox.Text = "";
         }
         #endregion
     }
