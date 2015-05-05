@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace TwitchClient.Panels
+namespace TwitchClient.Panels.Broadcasting
 {
     public partial class BroadcastingInfoPanel : UserControl
     {

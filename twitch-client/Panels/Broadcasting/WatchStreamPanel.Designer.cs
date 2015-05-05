@@ -1,4 +1,4 @@
-﻿namespace TwitchClient.Panels
+﻿namespace TwitchClient.Panels.Broadcasting
 {
     partial class WatchStreamPanel
     {
