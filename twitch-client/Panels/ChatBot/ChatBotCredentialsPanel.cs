@@ -4,7 +4,6 @@ namespace TwitchClient.Panels.ChatBot
 {
     public partial class ChatBotCredentialsPanel : UserControl
     {
-        // TODO add tool tips, password must be in oauth, from http://twitchapps.com/tmi/, etc.
         public string Nickname { get { return nicknameTextBox.Text; } }
         public string Password { get { return passwordTextBox.Text; } }
         public string Hostname

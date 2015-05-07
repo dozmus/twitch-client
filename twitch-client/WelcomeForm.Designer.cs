@@ -33,14 +33,15 @@
             this.twitchUsernameLabel = new System.Windows.Forms.Label();
             this.connectTwitchButton = new System.Windows.Forms.Button();
             this.twitchUsernameTextBox = new System.Windows.Forms.TextBox();
+            this.lowRamModeCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // doneButton
             // 
-            this.doneButton.Location = new System.Drawing.Point(197, 67);
+            this.doneButton.Location = new System.Drawing.Point(197, 87);
             this.doneButton.Name = "doneButton";
             this.doneButton.Size = new System.Drawing.Size(75, 23);
-            this.doneButton.TabIndex = 1;
+            this.doneButton.TabIndex = 3;
             this.doneButton.Text = "&Done";
             this.doneButton.UseVisualStyleBackColor = true;
             this.doneButton.Click += new System.EventHandler(this.doneButton_Click);
@@ -51,7 +52,7 @@
             this.statusLabel.Location = new System.Drawing.Point(12, 72);
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(63, 13);
-            this.statusLabel.TabIndex = 2;
+            this.statusLabel.TabIndex = 0;
             this.statusLabel.Text = "Status: N/A";
             // 
             // twitchUsernameLabel
@@ -78,13 +79,24 @@
             this.twitchUsernameTextBox.Location = new System.Drawing.Point(117, 12);
             this.twitchUsernameTextBox.Name = "twitchUsernameTextBox";
             this.twitchUsernameTextBox.Size = new System.Drawing.Size(155, 20);
-            this.twitchUsernameTextBox.TabIndex = 2;
+            this.twitchUsernameTextBox.TabIndex = 0;
+            // 
+            // lowRamModeCheckBox
+            // 
+            this.lowRamModeCheckBox.AutoSize = true;
+            this.lowRamModeCheckBox.Location = new System.Drawing.Point(15, 91);
+            this.lowRamModeCheckBox.Name = "lowRamModeCheckBox";
+            this.lowRamModeCheckBox.Size = new System.Drawing.Size(103, 17);
+            this.lowRamModeCheckBox.TabIndex = 2;
+            this.lowRamModeCheckBox.Text = "Low RAM Mode";
+            this.lowRamModeCheckBox.UseVisualStyleBackColor = true;
             // 
             // WelcomeForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 101);
+            this.ClientSize = new System.Drawing.Size(284, 122);
+            this.Controls.Add(this.lowRamModeCheckBox);
             this.Controls.Add(this.twitchUsernameTextBox);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.twitchUsernameLabel);
@@ -107,5 +119,6 @@
         private System.Windows.Forms.Label twitchUsernameLabel;
         private System.Windows.Forms.Button connectTwitchButton;
         private System.Windows.Forms.TextBox twitchUsernameTextBox;
+        public System.Windows.Forms.CheckBox lowRamModeCheckBox;
     }
 }

@@ -47,6 +47,13 @@ namespace TwitchClient
             this.chatBotSplitContainer = new System.Windows.Forms.SplitContainer();
             this.chatRichTextBox = new System.Windows.Forms.RichTextBox();
             this.chatUsersListBox = new System.Windows.Forms.ListBox();
+            this.chatUsersListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.purgeUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timeoutUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timeout60sUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timeout1hUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timeout24hUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.banUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.chatBotSettingsTabPage = new System.Windows.Forms.TabPage();
             this.chatBotSettingsTabControl = new System.Windows.Forms.TabControl();
             this.chatBotCredsTabPage = new System.Windows.Forms.TabPage();
@@ -55,12 +62,13 @@ namespace TwitchClient
             this.addEchoCommandButton = new System.Windows.Forms.Button();
             this.newEchoCommandTextBox = new System.Windows.Forms.TextBox();
             this.echoCommandsListBox = new System.Windows.Forms.ListBox();
-            this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.randomNotificationsTabPage = new System.Windows.Forms.TabPage();
             this.addRandomNotificationButton = new System.Windows.Forms.Button();
             this.newRandomNotificationTextBox = new System.Windows.Forms.TextBox();
             this.randomNotificationsListBox = new System.Windows.Forms.ListBox();
+            this.updateTimer = new System.Windows.Forms.Timer(this.components);
+            this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.unbanUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.masterStatusStrip.SuspendLayout();
             this.masterMenuStrip.SuspendLayout();
             this.tabControl.SuspendLayout();
@@ -70,6 +78,7 @@ namespace TwitchClient
             this.chatBotSplitContainer.Panel1.SuspendLayout();
             this.chatBotSplitContainer.Panel2.SuspendLayout();
             this.chatBotSplitContainer.SuspendLayout();
+            this.chatUsersListContextMenu.SuspendLayout();
             this.chatBotSettingsTabPage.SuspendLayout();
             this.chatBotSettingsTabControl.SuspendLayout();
             this.chatBotCredsTabPage.SuspendLayout();
@@ -226,12 +235,69 @@ namespace TwitchClient
             // 
             // chatUsersListBox
             // 
+            this.chatUsersListBox.ContextMenuStrip = this.chatUsersListContextMenu;
             this.chatUsersListBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.chatUsersListBox.FormattingEnabled = true;
             this.chatUsersListBox.Location = new System.Drawing.Point(0, 0);
             this.chatUsersListBox.Name = "chatUsersListBox";
             this.chatUsersListBox.Size = new System.Drawing.Size(124, 373);
+            this.chatUsersListBox.Sorted = true;
             this.chatUsersListBox.TabIndex = 0;
+            // 
+            // chatUsersListContextMenu
+            // 
+            this.chatUsersListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.purgeUserToolStripMenuItem,
+            this.timeoutUserToolStripMenuItem,
+            this.timeout60sUserToolStripMenuItem,
+            this.timeout1hUserToolStripMenuItem,
+            this.timeout24hUserToolStripMenuItem,
+            this.banUserToolStripMenuItem,
+            this.unbanUserToolStripMenuItem});
+            this.chatUsersListContextMenu.Name = "chatUsersListContextMenu";
+            this.chatUsersListContextMenu.Size = new System.Drawing.Size(153, 180);
+            // 
+            // purgeUserToolStripMenuItem
+            // 
+            this.purgeUserToolStripMenuItem.Name = "purgeUserToolStripMenuItem";
+            this.purgeUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.purgeUserToolStripMenuItem.Text = "Purge";
+            this.purgeUserToolStripMenuItem.Click += new System.EventHandler(this.purgeUserToolStripMenuItem_Click);
+            // 
+            // timeoutUserToolStripMenuItem
+            // 
+            this.timeoutUserToolStripMenuItem.Name = "timeoutUserToolStripMenuItem";
+            this.timeoutUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.timeoutUserToolStripMenuItem.Text = "Timeout";
+            this.timeoutUserToolStripMenuItem.Click += new System.EventHandler(this.timeoutUserToolStripMenuItem_Click);
+            // 
+            // timeout60sUserToolStripMenuItem
+            // 
+            this.timeout60sUserToolStripMenuItem.Name = "timeout60sUserToolStripMenuItem";
+            this.timeout60sUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.timeout60sUserToolStripMenuItem.Text = "Timeout (60s)";
+            this.timeout60sUserToolStripMenuItem.Click += new System.EventHandler(this.timeout60sUserToolStripMenuItem_Click);
+            // 
+            // timeout1hUserToolStripMenuItem
+            // 
+            this.timeout1hUserToolStripMenuItem.Name = "timeout1hUserToolStripMenuItem";
+            this.timeout1hUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.timeout1hUserToolStripMenuItem.Text = "Timeout (1h)";
+            this.timeout1hUserToolStripMenuItem.Click += new System.EventHandler(this.timeout1hUserToolStripMenuItem_Click);
+            // 
+            // timeout24hUserToolStripMenuItem
+            // 
+            this.timeout24hUserToolStripMenuItem.Name = "timeout24hUserToolStripMenuItem";
+            this.timeout24hUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.timeout24hUserToolStripMenuItem.Text = "Timeout (24h)";
+            this.timeout24hUserToolStripMenuItem.Click += new System.EventHandler(this.timeout24hUserToolStripMenuItem_Click);
+            // 
+            // banUserToolStripMenuItem
+            // 
+            this.banUserToolStripMenuItem.Name = "banUserToolStripMenuItem";
+            this.banUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.banUserToolStripMenuItem.Text = "Ban";
+            this.banUserToolStripMenuItem.Click += new System.EventHandler(this.banUserToolStripMenuItem_Click);
             // 
             // chatBotSettingsTabPage
             // 
@@ -311,16 +377,6 @@ namespace TwitchClient
             this.echoCommandsListBox.Size = new System.Drawing.Size(368, 173);
             this.echoCommandsListBox.TabIndex = 0;
             // 
-            // updateTimer
-            // 
-            this.updateTimer.Interval = 2500;
-            this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
-            // 
-            // followersUpdateTimer
-            // 
-            this.followersUpdateTimer.Interval = 5000;
-            this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
-            // 
             // randomNotificationsTabPage
             // 
             this.randomNotificationsTabPage.Controls.Add(this.addRandomNotificationButton);
@@ -359,6 +415,23 @@ namespace TwitchClient
             this.randomNotificationsListBox.Size = new System.Drawing.Size(368, 173);
             this.randomNotificationsListBox.TabIndex = 3;
             // 
+            // updateTimer
+            // 
+            this.updateTimer.Interval = 2500;
+            this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
+            // 
+            // followersUpdateTimer
+            // 
+            this.followersUpdateTimer.Interval = 10000;
+            this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
+            // 
+            // unbanUserToolStripMenuItem
+            // 
+            this.unbanUserToolStripMenuItem.Name = "unbanUserToolStripMenuItem";
+            this.unbanUserToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.unbanUserToolStripMenuItem.Text = "Unban";
+            this.unbanUserToolStripMenuItem.Click += new System.EventHandler(this.unbanUserToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -383,6 +456,7 @@ namespace TwitchClient
             this.chatBotSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.chatBotSplitContainer)).EndInit();
             this.chatBotSplitContainer.ResumeLayout(false);
+            this.chatUsersListContextMenu.ResumeLayout(false);
             this.chatBotSettingsTabPage.ResumeLayout(false);
             this.chatBotSettingsTabControl.ResumeLayout(false);
             this.chatBotCredsTabPage.ResumeLayout(false);
@@ -427,6 +501,14 @@ namespace TwitchClient
         private System.Windows.Forms.Button addRandomNotificationButton;
         private System.Windows.Forms.TextBox newRandomNotificationTextBox;
         private System.Windows.Forms.ListBox randomNotificationsListBox;
+        private System.Windows.Forms.ContextMenuStrip chatUsersListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem purgeUserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem timeoutUserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem timeout60sUserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem timeout1hUserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem timeout24hUserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem banUserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem unbanUserToolStripMenuItem;
     }
 }
 
