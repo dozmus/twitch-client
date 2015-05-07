@@ -13,10 +13,9 @@ namespace TwitchClient.ChatBot
     {
         // TODO throttle writing
         // TODO error handling, handle ping timeouts, reconnecting, etc
-        // error logging in >> :tmi.twitch.tv NOTICE * :Error logging in
+        // XXX HANDLE error logging in >> :tmi.twitch.tv NOTICE * :Error logging in
         // TODO limit chat rtb length
-        // TODO add ranks to rtb
-        // TODO add twitch emotes to rtb
+        // TODO add twitch emotes/rank images (turbo, mod, etc) to rtb
         // TODO cluster join/part messages
 
         public static Dictionary<string, string> EchoCommands = new Dictionary<string, string>();
@@ -49,15 +48,16 @@ namespace TwitchClient.ChatBot
         }
 
         #region Core functionality
-        public bool Init(string nickname, string password, string channel, string hostname, int port)
+        public bool Initialize(string nickname, string password, string channel, string hostname, int port)
         {
+            // TODO handle reconnects
             // Setting variables
             _channel = channel.StartsWith("#") ? channel : "#" + channel;
             _nickname = nickname;
             _password = password;
 
 #if DEBUG
-            Debug.WriteLine("Chat bot initialised with settings: (nick:" + _nickname + ",channel:" + _channel + ",host:" + hostname + ",port:" + port + ")");
+            Debug.WriteLine("Chat bot initialized with settings: (nick:" + _nickname + ",channel:" + _channel + ",host:" + hostname + ",port:" + port + ")");
 #endif
 
             try
@@ -67,9 +67,16 @@ namespace TwitchClient.ChatBot
                 _reader = new StreamReader(_client.GetStream());
                 Connected = true;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                // XXX msgbox.write(e)
+                MessageBox.Show("An unhandled critical error occured while trying to connect the IRC bot to the Twitch IRC server." + Environment.NewLine
+                    + "Error Message: " + ex.Message, "IRC Bot - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Terminating session since critical error
+                if (_client.Connected)
+                {
+                    _client.Close();
+                }
                 Connected = false;
                 return false;
             }
@@ -137,7 +144,7 @@ namespace TwitchClient.ChatBot
                     continue;
 
 #if DEBUG
-                Debug.WriteLine(">> " + line);
+                // Debug.WriteLine(">> " + line);
 #endif
 
                 // Normalising line
@@ -170,6 +177,15 @@ namespace TwitchClient.ChatBot
 
                 switch (command) // XXX make an OOP command handler
                 {
+                    case "353": // Initial users list
+                        string users = line.Substring(line.IndexOf(':') + 1);
+                        string[] nickList = users.Split(' ');
+
+                        foreach (string nickname in nickList)
+                        {
+                            AddUser(nickname);
+                        }
+                        break;
                     case "JOIN":
                         // Parsing input
                         string nick = sender.Substring(0, sender.IndexOf('!'));
@@ -185,9 +201,28 @@ namespace TwitchClient.ChatBot
                         // Updating UI
                         AppendTextPrefixNewLine("* Part: " + nick);
                         RemoveUser(nick);
+                        RemoveUser("@" + nick);
                         break;
                     case "QUIT":
                         // XXX impl - i dont think twitch even uses quit?
+                        break;
+                    case "MODE":
+                        // :jtv MODE #absorbicapple +o purenomsain
+                        nick = explode[4];
+
+                        switch (explode[3])
+                        {
+                            case "+o": // give mod
+                                RemoveUser(nick);
+                                AddUser("@" + nick);
+                                AppendTextPrefixNewLine("* Modded: " + nick);
+                                break;
+                            case "-o": // remove mod
+                                RemoveUser("@" + nick);
+                                AddUser(nick);
+                                AppendTextPrefixNewLine("* Unmodded: " + nick);
+                                break;
+                        }
                         break;
                     case "PRIVMSG":
                         // Parsing input
@@ -235,6 +270,31 @@ namespace TwitchClient.ChatBot
             WriteLineFlush("PRIVMSG " + _channel + " :" + message);
         }
 
+        public void SendTimeout(string user, string time = "")
+        {
+            if (user.Length == 0)
+                return;
+            if (user.StartsWith("@"))
+                user = user.Substring(1);
+            SendMessageFlush(".timeout " + user + (time.Length == 0 ? "" : " " + time));
+        }
+
+        public void SendBan(string user)
+        {
+            if (user.Length == 0)
+                return;
+            if (user.StartsWith("@"))
+                return; // cant ban mods
+            SendMessageFlush(".ban " + user);
+        }
+
+        public void SendUnban(string user)
+        {
+            if (user.Length == 0)
+                return;
+            SendMessageFlush(".unban " + user);
+        }
+
         private void WriteLineFlush(string line)
         {
             try
@@ -253,8 +313,11 @@ namespace TwitchClient.ChatBot
             }
             catch (Exception e)
             {
-                Connected = false;
-                // TODO spit error - this usually means connection has terminated
+                if (!_client.Connected)
+                {
+                    Connected = false;
+                    MessageBox.Show("The IRC server connection was terminated during a message write event." + Environment.NewLine + "Error Message: " + e.Message, "IRC Bot - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
         #endregion
@@ -274,25 +337,32 @@ namespace TwitchClient.ChatBot
         {
             _chatRichTextBox.Invoke((MethodInvoker)(() =>
             {
-                _chatRichTextBox.AppendText(text);
+                _chatRichTextBox.Text += text; // to avoid scrolling to end, like when using (RTB).AppendText
 
                 // Scrolling to end of rtb if not focused (i.e. if the user is not fiddling with it)
-                if (!_chatRichTextBox.Focused) // TODO fix this - its not working
-                {
-                    _chatRichTextBox.SelectionStart = _chatRichTextBox.Text.Length;
-                    _chatRichTextBox.ScrollToCaret();
-                }
+                if (_chatRichTextBox.Focused)
+                    return;
+                _chatRichTextBox.SelectionStart = _chatRichTextBox.Text.Length;
+                _chatRichTextBox.ScrollToCaret();
             }));
         }
 
         private void AddUser(string nickname)
         {
-            _chatUsersListBox.Invoke((MethodInvoker)(() => _chatUsersListBox.Items.Add(nickname)));
+            _chatUsersListBox.Invoke((MethodInvoker)(() =>
+            {
+                if (!_chatUsersListBox.Items.Contains(nickname))
+                    _chatUsersListBox.Items.Add(nickname);
+            }));
         }
 
         private void RemoveUser(string nickname)
         {
-            _chatUsersListBox.Invoke((MethodInvoker)(() => _chatUsersListBox.Items.Remove(nickname)));
+            _chatUsersListBox.Invoke((MethodInvoker)(() =>
+            {
+                if (_chatUsersListBox.Items.Contains(nickname))
+                    _chatUsersListBox.Items.Remove(nickname);
+            }));
         }
         #endregion
     }

@@ -21,9 +21,9 @@ namespace TwitchClient
         private bool _updatingFollowers;
         private bool _updatingBaseStats;
 
-        // TODO handle async download failure, i.e. mark flags as available so update occurs next timer tick
         // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
         // TODO add feature to remove echo commands/random notifications
+        // TODO ignore duplicate follower notifications
 
         #region Initialisation
         public MainForm()
@@ -43,8 +43,8 @@ namespace TwitchClient
                 _latestFollowersApiUrl.Replace("{username}", _welcomeForm.TwitchUsername).Replace("{amount}", "10");
 
             // Preparing web client objects
-            _followersJsonObjectClient.DownloadStringCompleted += (sender, e) => OnDownloadFollowersJsonObject(e.Result);
-            _baseChannelJsonObjectClient.DownloadStringCompleted += (sender, e) => OnDownloadBaseChannelJsonObject(e.Result);
+            _followersJsonObjectClient.DownloadStringCompleted += (sender, e) => OnDownloadFollowersJsonObject(e);
+            _baseChannelJsonObjectClient.DownloadStringCompleted += (sender, e) => OnDownloadBaseChannelJsonObject(e);
 
             // Preparing custom controls
             InitializeCustomControls();
@@ -58,6 +58,10 @@ namespace TwitchClient
 
             // Initialising the irc bot class
             _ircBot = new IrcBot(chatRichTextBox, chatUsersListBox);
+
+            // Loading all chat emotes
+            Task loadChatEmotesTask = new Task(EmoteCache.LoadEmotes);
+            loadChatEmotesTask.Start();
         }
 
         private void InitializeCustomControls()
@@ -72,7 +76,14 @@ namespace TwitchClient
 #if DEBUG
             watchStreamPanel.SetBrowserHtml("<!DOCTYPE html><html><body style=\"background-color:#000;font-size:32px;color:#fff;\">Stream preview here.</body></html>");
 #else
-            watchStreamPanel.Navigate("http://www.twitch.tv/" + _welcomeForm.TwitchUsername + "/popout");
+            if (!_welcomeForm.lowRamModeCheckBox.Checked) // not navigating to the stream, to save RAM usage
+            {
+                watchStreamPanel.Navigate("http://www.twitch.tv/" + _welcomeForm.TwitchUsername + "/popout");
+            }
+            else
+            {
+                watchStreamPanel.SetBrowserHtml("<!DOCTYPE html><html><body style=\"background-color:#000;font-size:32px;color:#fff;\">Stream preview here - Low RAM mode so this is disabled.</body></html>");
+            }
 #endif
         }
         #endregion
@@ -81,31 +92,73 @@ namespace TwitchClient
         private void chatBotCredentialsPanelConnectButton_Click(object sender, EventArgs e)
         {
             // TODO verify input, listen to init response
-            _ircBot.Init(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password, _welcomeForm.TwitchUsername,
+            _ircBot.Initialize(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password, _welcomeForm.TwitchUsername,
                 chatBotCredentialsPanel.Hostname, chatBotCredentialsPanel.Port);
         }
 
         private void updateBroadcastingInfoUpdateButton_Click(object sender, EventArgs e)
         {
             // Preparing request
-            // TODO only send info which is to be updated, ie if textbox is empty
-            var url = "https://api.twitch.tv/kraken/channels/" + _welcomeForm.TwitchUsername + "?"
-                      + "channel[status]=" + Uri.EscapeDataString(updateBroadcastingInfoPanel.TitleText)
-                      + "&channel[game]=" + Uri.EscapeDataString(updateBroadcastingInfoPanel.GameText)
-                      + "&oauth_token=" + _welcomeForm.AuthToken + "&_method=put";
+            string getComponents = "";
+
+            if (!String.IsNullOrWhiteSpace(updateBroadcastingInfoPanel.TitleText)) // Broadcast title
+            {
+                getComponents = "channel[status]=" + Uri.EscapeDataString(updateBroadcastingInfoPanel.TitleText);
+            }
+
+            if (!String.IsNullOrWhiteSpace(updateBroadcastingInfoPanel.GameText)) // Broadcast Game
+            {
+                // handling chained requests
+                getComponents += (getComponents.Length == 0 ? "" : "&") + "channel[game]=" + Uri.EscapeDataString(updateBroadcastingInfoPanel.GameText);
+            }
+
+            var extension = _welcomeForm.TwitchUsername + "?" + getComponents + "&oauth_token=" + _welcomeForm.AuthToken + "&_method=put";
+            var url = "https://api.twitch.tv/kraken/channels/" + extension;
+
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Timeout = 1500;
             request.Method = "GET";
             request.Accept = "application/vnd.twitchtv.v2+json";
 
             // Reading response
-            // TODO parse response and check what happened to our request: success, failure, html error code, etc.
-            /*
-            using (var resp = request.GetResponse())
+            try
             {
-                var html = new StreamReader(resp.GetResponseStream()).ReadToEnd();
+                using (var resp = request.GetResponse())
+                {
+                }
             }
-            */
+            catch (WebException ex)
+            {
+                if (ex.Status == WebExceptionStatus.ProtocolError)
+                {
+                    var response = ex.Response as HttpWebResponse;
+
+                    if (response != null)
+                    {
+                        switch (response.StatusCode)
+                        {
+                            case HttpStatusCode.Unauthorized:
+                                MessageBox.Show(
+                                    "HTTP/401: Your OAuth2 token was not accepted by the Twitch API, try restarting the application to generate a new one.",
+                                    "HTTP GET - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                break;
+                            default:
+                                MessageBox.Show("HTTP/" + response.StatusCode + ": Unhandled error.", "HTTP GET - Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("(Unhandled) Error Message: " + ex.Message, "HTTP GET - Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            
+            // Clearing text boxes
+            updateBroadcastingInfoPanel.ClearGameTextBox();
+            updateBroadcastingInfoPanel.ClearTitleTextBox();
         }
         #endregion
 
@@ -156,12 +209,20 @@ namespace TwitchClient
         #region Recent followers updating
         private void DownloadFollowersJsonObject()
         {
-            _followersJsonObjectClient.DownloadStringAsync(new Uri(_latestFollowersApiUrl));
+            _followersJsonObjectClient.DownloadStringTaskAsync(new Uri(_latestFollowersApiUrl));
         }
 
-        private void OnDownloadFollowersJsonObject(string source)
+        private void OnDownloadFollowersJsonObject(DownloadStringCompletedEventArgs e)
         {
-            var task = new Task(() => UpdateFollowersInfo(source));
+            // Checking if an error occured
+            if (e.Cancelled || e.Error != null || String.IsNullOrEmpty(e.Result))
+            {
+                _updatingFollowers = false;
+                return;
+            }
+
+            // Creating the task
+            var task = new Task(() => UpdateFollowersInfo(e.Result));
             task.Start();
         }
 
@@ -207,12 +268,20 @@ namespace TwitchClient
         #region Base stats updating
         private void DownloadBaseChannelJsonObject()
         {
-            _baseChannelJsonObjectClient.DownloadStringAsync(new Uri(_baseApiUrl));
+            _baseChannelJsonObjectClient.DownloadStringTaskAsync(new Uri(_baseApiUrl));
         }
 
-        private void OnDownloadBaseChannelJsonObject(string source)
+        private void OnDownloadBaseChannelJsonObject(DownloadStringCompletedEventArgs e)
         {
-            var task = new Task(() => UpdateBaseChannelInfo(source));
+            // Checking if an error occured
+            if (e.Cancelled || e.Error != null || String.IsNullOrEmpty(e.Result))
+            {
+                _updatingBaseStats = false;
+                return;
+            }
+
+            // Creating the task
+            var task = new Task(() => UpdateBaseChannelInfo(e.Result));
             task.Start();
         }
 
@@ -298,7 +367,8 @@ namespace TwitchClient
                 // Checking if we can add the entry to the dictionary
                 if (IrcBot.EchoCommands.ContainsKey(commandName))
                 {
-                    return; // XXX failure, TODO tell user
+                    MessageBox.Show("The specified command name already exists, please choose another or deleted the current one.", "Add Echo Command - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
                 // Adding the entry
@@ -321,7 +391,8 @@ namespace TwitchClient
                 // Checking if we can add the entry to the dictionary
                 if (IrcBot.RandomNotifications.Contains(message))
                 {
-                    return; // XXX failure, TODO tell user
+                    MessageBox.Show("The specified random notification already exists.", "Add Random Notification - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
                 // Adding the entry
@@ -331,6 +402,63 @@ namespace TwitchClient
             // Adding command to list box - assuming success if we got this far
             randomNotificationsListBox.Items.Add(newRandomNotificationTextBox.Text);
             newRandomNotificationTextBox.Text = "";
+        }
+        #endregion
+
+        #region Chat bot context menu click events
+        private void purgeUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString(); // XXX we dont handle banning mods (@{nick}) since you cant as a mod
+            _ircBot.SendTimeout(targetNick, "1");
+        }
+
+        private void timeoutUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+            _ircBot.SendTimeout(targetNick);
+        }
+
+        private void timeout60sUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+            _ircBot.SendTimeout(targetNick, "60");
+        }
+
+        private void timeout1hUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+            _ircBot.SendTimeout(targetNick, "3600");
+        }
+
+        private void timeout24hUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+            _ircBot.SendTimeout(targetNick, "86400");
+        }
+
+        private void banUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+            _ircBot.SendBan(targetNick);
+        }
+        private void unbanUserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (chatUsersListBox.SelectedItem == null)
+                return;
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+            _ircBot.SendUnban(targetNick);
         }
         #endregion
     }

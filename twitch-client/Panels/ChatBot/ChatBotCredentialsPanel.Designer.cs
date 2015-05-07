@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.nicknameLabel = new System.Windows.Forms.Label();
             this.passwordLabel = new System.Windows.Forms.Label();
             this.ircServerLabel = new System.Windows.Forms.Label();
@@ -35,6 +36,7 @@
             this.passwordTextBox = new System.Windows.Forms.TextBox();
             this.ircServerTextBox = new System.Windows.Forms.TextBox();
             this.connectButton = new System.Windows.Forms.Button();
+            this.panelToolTip = new System.Windows.Forms.ToolTip(this.components);
             this.SuspendLayout();
             // 
             // nicknameLabel
@@ -45,6 +47,7 @@
             this.nicknameLabel.Size = new System.Drawing.Size(55, 13);
             this.nicknameLabel.TabIndex = 0;
             this.nicknameLabel.Text = "Nickname";
+            this.panelToolTip.SetToolTip(this.nicknameLabel, "Twitch username for the bot.");
             // 
             // passwordLabel
             // 
@@ -54,6 +57,8 @@
             this.passwordLabel.Size = new System.Drawing.Size(53, 13);
             this.passwordLabel.TabIndex = 1;
             this.passwordLabel.Text = "Password";
+            this.panelToolTip.SetToolTip(this.passwordLabel, "Twitch password oauth token for the bot - retrieve from http://twitchapps.com/tmi" +
+        "/");
             // 
             // ircServerLabel
             // 
@@ -63,6 +68,7 @@
             this.ircServerLabel.Size = new System.Drawing.Size(59, 13);
             this.ircServerLabel.TabIndex = 2;
             this.ircServerLabel.Text = "IRC Server";
+            this.panelToolTip.SetToolTip(this.ircServerLabel, "Twitch IRC server details, formatted as \'server/port\'.");
             // 
             // nicknameTextBox
             // 
@@ -70,6 +76,7 @@
             this.nicknameTextBox.Name = "nicknameTextBox";
             this.nicknameTextBox.Size = new System.Drawing.Size(212, 20);
             this.nicknameTextBox.TabIndex = 3;
+            this.panelToolTip.SetToolTip(this.nicknameTextBox, "Twitch username for the bot.");
             // 
             // passwordTextBox
             // 
@@ -78,6 +85,8 @@
             this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(212, 20);
             this.passwordTextBox.TabIndex = 4;
+            this.panelToolTip.SetToolTip(this.passwordTextBox, "Twitch password oauth token for the bot - retrieve from http://twitchapps.com/tmi" +
+        "/");
             // 
             // ircServerTextBox
             // 
@@ -86,6 +95,7 @@
             this.ircServerTextBox.Size = new System.Drawing.Size(212, 20);
             this.ircServerTextBox.TabIndex = 5;
             this.ircServerTextBox.Text = "irc.twitch.tv/6667";
+            this.panelToolTip.SetToolTip(this.ircServerTextBox, "Twitch IRC server details, formatted as \'server/port\'.");
             // 
             // connectButton
             // 
@@ -95,6 +105,12 @@
             this.connectButton.TabIndex = 6;
             this.connectButton.Text = "Connect";
             this.connectButton.UseVisualStyleBackColor = true;
+            // 
+            // panelToolTip
+            // 
+            this.panelToolTip.IsBalloon = true;
+            this.panelToolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.panelToolTip.ToolTipTitle = "Chat Bot Credentials";
             // 
             // ChatBotCredentialsPanel
             // 
@@ -123,5 +139,6 @@
         private System.Windows.Forms.TextBox passwordTextBox;
         private System.Windows.Forms.TextBox ircServerTextBox;
         public System.Windows.Forms.Button connectButton;
+        private System.Windows.Forms.ToolTip panelToolTip;
     }
 }
