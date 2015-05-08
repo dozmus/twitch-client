@@ -124,7 +124,7 @@ namespace TwitchClient
             this.toggleMainStatsToolStripMenuItem.Checked = true;
             this.toggleMainStatsToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.toggleMainStatsToolStripMenuItem.Name = "toggleMainStatsToolStripMenuItem";
-            this.toggleMainStatsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.toggleMainStatsToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.toggleMainStatsToolStripMenuItem.Text = "Main Stats";
             this.toggleMainStatsToolStripMenuItem.Click += new System.EventHandler(this.mainStatsToolStripMenuItem_Click);
             // 
@@ -133,7 +133,7 @@ namespace TwitchClient
             this.toggleFollowersToolStripMenuItem.Checked = true;
             this.toggleFollowersToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.toggleFollowersToolStripMenuItem.Name = "toggleFollowersToolStripMenuItem";
-            this.toggleFollowersToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.toggleFollowersToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.toggleFollowersToolStripMenuItem.Text = "Followers";
             this.toggleFollowersToolStripMenuItem.Click += new System.EventHandler(this.followersToolStripMenuItem_Click);
             // 
@@ -431,12 +431,12 @@ namespace TwitchClient
             // 
             // updateTimer
             // 
-            this.updateTimer.Interval = 2500;
+            this.updateTimer.Interval = 5000;
             this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
             // 
             // followersUpdateTimer
             // 
-            this.followersUpdateTimer.Interval = 10000;
+            this.followersUpdateTimer.Interval = 15000;
             this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
             // 
             // MainForm

@@ -98,14 +98,23 @@ namespace TwitchClient
         #region Custom control bindings
         private void chatBotCredentialsPanelConnectButton_Click(object sender, EventArgs e)
         {
-            // TODO verify input, listen to init response
+            // TODO verify input to this function, listen to init response
             _ircBot.Initialize(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password, _welcomeForm.TwitchUsername,
                 chatBotCredentialsPanel.Hostname, chatBotCredentialsPanel.Port);
         }
 
         private void updateBroadcastingInfoUpdateButton_Click(object sender, EventArgs e)
         {
-            // Preparing request
+            // Checking if both boxes are empty
+            if (String.IsNullOrWhiteSpace(updateBroadcastingInfoPanel.TitleText) &&
+                String.IsNullOrWhiteSpace(updateBroadcastingInfoPanel.GameText))
+            {
+                MessageBox.Show("No values entered to update.", "Invalid Arguments - Error", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            // Preparing request data
             string getComponents = "";
 
             if (!String.IsNullOrWhiteSpace(updateBroadcastingInfoPanel.TitleText)) // Broadcast title
@@ -119,6 +128,7 @@ namespace TwitchClient
                 getComponents += (getComponents.Length == 0 ? "" : "&") + "channel[game]=" + Uri.EscapeDataString(updateBroadcastingInfoPanel.GameText);
             }
 
+            // Preparing request
             var extension = _welcomeForm.TwitchUsername + "?" + getComponents + "&oauth_token=" + _welcomeForm.AuthToken + "&_method=put";
             var url = "https://api.twitch.tv/kraken/channels/" + extension;
 
