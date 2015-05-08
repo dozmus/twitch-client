@@ -168,7 +168,7 @@ namespace TwitchClient
             // Headers
             AppendHeader("HTTP/1.1 200 OK");
             AppendHeader("Connection: close");
-            AppendHeader("Date: Sat, 02 May 2015 16:50:00 GMT"); // XXX auto gen?
+            AppendHeader("Date: " + DateTime.Now.ToUniversalTime().ToString("r"));
 
             // Html
             _response += Environment.NewLine +

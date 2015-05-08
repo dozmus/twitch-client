@@ -14,9 +14,7 @@ namespace TwitchClient.ChatBot
         // TODO throttle writing
         // TODO error handling, handle ping timeouts, reconnecting, etc
         // XXX HANDLE error logging in >> :tmi.twitch.tv NOTICE * :Error logging in
-        // TODO limit chat rtb length
         // TODO add twitch emotes/rank images (turbo, mod, etc) to rtb
-        // TODO cluster join/part messages
 
         public static Dictionary<string, string> EchoCommands = new Dictionary<string, string>();
         public static Dictionary<string, int> EchoCommandsCooldown = new Dictionary<string, int>();
@@ -25,8 +23,6 @@ namespace TwitchClient.ChatBot
         private const int EchoCommandCooldown = 35000;
         private const int RandomNotificationCooldown = 120000;
         private readonly TcpClient _client;
-        private readonly RichTextBox _chatRichTextBox;
-        private readonly ListBox _chatUsersListBox;
         private int _lastPing;
         private int _lastServerPing;
         private int _lastRandomNotification;
@@ -38,13 +34,14 @@ namespace TwitchClient.ChatBot
         private string _password;
         private readonly Random _random = new Random();
         public bool Connected { get; private set; }
+        private readonly MainForm _masterForm;
+        private const int MaxChatBoxLines = 1000;
 
-        public IrcBot(RichTextBox chatRichTextBox, ListBox chatUsersListBox)
+        public IrcBot(MainForm master)
         {
             // Initialising socket
-            _client = new TcpClient(); // XXX udp?
-            _chatRichTextBox = chatRichTextBox;
-            _chatUsersListBox = chatUsersListBox;
+            _client = new TcpClient(); // XXX use udp?
+            _masterForm = master;
         }
 
         #region Core functionality
@@ -74,9 +71,7 @@ namespace TwitchClient.ChatBot
 
                 // Terminating session since critical error
                 if (_client.Connected)
-                {
                     _client.Close();
-                }
                 Connected = false;
                 return false;
             }
@@ -93,7 +88,7 @@ namespace TwitchClient.ChatBot
         public void Run()
         {
             // Initialising session
-            _lastPing = _lastServerPing = Environment.TickCount;
+            _lastPing = _lastServerPing =_lastRandomNotification = Environment.TickCount;
             _writer.WriteLine("PASS " + _password);
             _writer.WriteLine("NICK " + _nickname);
             _writer.WriteLine("JOIN " + _channel);
@@ -135,12 +130,10 @@ namespace TwitchClient.ChatBot
                 }
 
                 // Checking if there is anything to read
-                if (_client.Available == 0)
-                    continue;
-                string line = _reader.ReadLine();
-
-                // Checking if the read line is valid
-                if (String.IsNullOrEmpty(line))
+                string line = "";
+                
+                // Checking if there is input
+                if (_client.Available == 0 && String.IsNullOrEmpty((line = _reader.ReadLine())))
                     continue;
 
 #if DEBUG
@@ -212,12 +205,18 @@ namespace TwitchClient.ChatBot
 
                         switch (explode[3])
                         {
-                            case "+o": // give mod
+                            case "+o": // Give mod
                                 RemoveUser(nick);
                                 AddUser("@" + nick);
                                 AppendTextPrefixNewLine("* Modded: " + nick);
+
+                                // Checking if we were modded, if so enabling the mod context menu for the users list
+                                if (nick.Equals(_nickname, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    _masterForm.SetUsersListContextMenuItemsEnabled(true);
+                                }
                                 break;
-                            case "-o": // remove mod
+                            case "-o": // Remove mod
                                 RemoveUser("@" + nick);
                                 AddUser(nick);
                                 AppendTextPrefixNewLine("* Unmodded: " + nick);
@@ -335,33 +334,46 @@ namespace TwitchClient.ChatBot
 
         private void _AppendText(string text)
         {
-            _chatRichTextBox.Invoke((MethodInvoker)(() =>
+            _masterForm.ChatRichTextBox.Invoke((MethodInvoker)(() =>
             {
-                _chatRichTextBox.Text += text; // to avoid scrolling to end, like when using (RTB).AppendText
+                _masterForm.ChatRichTextBox.Text += text; // to avoid scrolling to end, like when using (RTB).AppendText
 
                 // Scrolling to end of rtb if not focused (i.e. if the user is not fiddling with it)
-                if (_chatRichTextBox.Focused)
+                if (_masterForm.ChatRichTextBox.Focused)
                     return;
-                _chatRichTextBox.SelectionStart = _chatRichTextBox.Text.Length;
-                _chatRichTextBox.ScrollToCaret();
+                _masterForm.ChatRichTextBox.SelectionStart = _masterForm.ChatRichTextBox.Text.Length;
+                _masterForm.ChatRichTextBox.ScrollToCaret();
+
+                // Trimming lines if too many are present, in batches to not lock up the UI
+                int maxCycles = 5;
+
+                while (_masterForm.ChatRichTextBox.Lines.Length > MaxChatBoxLines && (maxCycles--) != 0)
+                {
+                    // XXX find a proper work around, this one is sufficient for now
+                    _masterForm.ChatRichTextBox.ReadOnly = false; // rtf is readonly, we must change this
+                    _masterForm.ChatRichTextBox.SelectionStart = 0;
+                    _masterForm.ChatRichTextBox.SelectionLength = _masterForm.ChatRichTextBox.Text.IndexOf('\n') + 1;
+                    _masterForm.ChatRichTextBox.SelectedText = "";
+                    _masterForm.ChatRichTextBox.ReadOnly = true;
+                }
             }));
         }
 
         private void AddUser(string nickname)
         {
-            _chatUsersListBox.Invoke((MethodInvoker)(() =>
+            _masterForm.ChatUsersListBox.Invoke((MethodInvoker)(() =>
             {
-                if (!_chatUsersListBox.Items.Contains(nickname))
-                    _chatUsersListBox.Items.Add(nickname);
+                if (!_masterForm.ChatUsersListBox.Items.Contains(nickname))
+                    _masterForm.ChatUsersListBox.Items.Add(nickname);
             }));
         }
 
         private void RemoveUser(string nickname)
         {
-            _chatUsersListBox.Invoke((MethodInvoker)(() =>
+            _masterForm.ChatUsersListBox.Invoke((MethodInvoker)(() =>
             {
-                if (_chatUsersListBox.Items.Contains(nickname))
-                    _chatUsersListBox.Items.Remove(nickname);
+                if (_masterForm.ChatUsersListBox.Items.Contains(nickname))
+                    _masterForm.ChatUsersListBox.Items.Remove(nickname);
             }));
         }
         #endregion

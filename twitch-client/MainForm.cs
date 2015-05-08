@@ -21,6 +21,13 @@ namespace TwitchClient
         private bool _updatingFollowers;
         private bool _updatingBaseStats;
 
+        public RichTextBox ChatRichTextBox
+        {
+            get { return chatRichTextBox; }
+        }
+
+        public ListBox ChatUsersListBox { get { return chatUsersListBox; } }
+
         // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
         // TODO add feature to remove echo commands/random notifications
         // TODO ignore duplicate follower notifications
@@ -57,10 +64,10 @@ namespace TwitchClient
             followersUpdateTimer_Tick(this, EventArgs.Empty);
 
             // Initialising the irc bot class
-            _ircBot = new IrcBot(chatRichTextBox, chatUsersListBox);
+            _ircBot = new IrcBot(this);
 
             // Loading all chat emotes
-            Task loadChatEmotesTask = new Task(EmoteCache.LoadEmotes);
+            var loadChatEmotesTask = new Task(EmoteCache.LoadEmotes);
             loadChatEmotesTask.Start();
         }
 
@@ -294,7 +301,7 @@ namespace TwitchClient
             }
             var json = JsonConvert.DeserializeObject<BaseChannelJsonObject.RootObject>(source);
 
-            if (json.streams == null || json.streams.Count == 0)
+            if (json.streams == null || json.streams.Count == 0) // If the user is offline, this branch will occur also
             {
                 _updatingBaseStats = false;
                 return;
@@ -405,7 +412,22 @@ namespace TwitchClient
         }
         #endregion
 
-        #region Chat bot context menu click events
+        #region Chat bot context menu
+        public void SetUsersListContextMenuItemsEnabled(bool enabled)
+        {
+            // XXX surely this can be cleaner
+            chatUsersListContextMenu.Invoke((MethodInvoker) (() =>
+            {
+                purgeUserToolStripMenuItem.Enabled = enabled;
+                timeoutUserToolStripMenuItem.Enabled = enabled;
+                timeout60sUserToolStripMenuItem.Enabled = enabled;
+                timeout1hUserToolStripMenuItem.Enabled = enabled;
+                timeout24hUserToolStripMenuItem.Enabled = enabled;
+                banUserToolStripMenuItem.Enabled = enabled;
+                unbanUserToolStripMenuItem.Enabled = enabled;
+            }));
+        }
+
         private void purgeUserToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (chatUsersListBox.SelectedItem == null)

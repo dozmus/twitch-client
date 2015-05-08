@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <None Include="LICENSE" />
     <Content Include="Resources\Chat Emotes\4Head.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
