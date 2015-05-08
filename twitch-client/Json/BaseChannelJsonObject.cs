@@ -4,33 +4,6 @@ namespace TwitchClient.Json
 {
     public class BaseChannelJsonObject
     {
-        public class Links
-        {
-            public string self { get; set; }
-        }
-
-        public class Preview
-        {
-            public string small { get; set; }
-            public string medium { get; set; }
-            public string large { get; set; }
-            public string template { get; set; }
-        }
-
-        public class Links2
-        {
-            public string self { get; set; }
-            public string follows { get; set; }
-            public string commercial { get; set; }
-            public string stream_key { get; set; }
-            public string chat { get; set; }
-            public string features { get; set; }
-            public string subscriptions { get; set; }
-            public string editors { get; set; }
-            public string videos { get; set; }
-            public string teams { get; set; }
-        }
-
         public class Channel
         {
             public Links2 _links { get; set; }
@@ -57,17 +30,23 @@ namespace TwitchClient.Json
             public string language { get; set; }
         }
 
-        public class Stream
+        public class Links
         {
-            public long _id { get; set; }
-            public string game { get; set; }
-            public int viewers { get; set; }
-            public string created_at { get; set; }
-            public int video_height { get; set; }
-            public double average_fps { get; set; }
-            public Links _links { get; set; }
-            public Preview preview { get; set; }
-            public Channel channel { get; set; }
+            public string self { get; set; }
+        }
+
+        public class Links2
+        {
+            public string self { get; set; }
+            public string follows { get; set; }
+            public string commercial { get; set; }
+            public string stream_key { get; set; }
+            public string chat { get; set; }
+            public string features { get; set; }
+            public string subscriptions { get; set; }
+            public string editors { get; set; }
+            public string videos { get; set; }
+            public string teams { get; set; }
         }
 
         public class Links3
@@ -79,11 +58,32 @@ namespace TwitchClient.Json
             public string followed { get; set; }
         }
 
+        public class Preview
+        {
+            public string small { get; set; }
+            public string medium { get; set; }
+            public string large { get; set; }
+            public string template { get; set; }
+        }
+
         public class RootObject
         {
             public List<Stream> streams { get; set; }
             public int _total { get; set; }
             public Links3 _links { get; set; }
+        }
+
+        public class Stream
+        {
+            public long _id { get; set; }
+            public string game { get; set; }
+            public int viewers { get; set; }
+            public string created_at { get; set; }
+            public int video_height { get; set; }
+            public double average_fps { get; set; }
+            public Links _links { get; set; }
+            public Preview preview { get; set; }
+            public Channel channel { get; set; }
         }
     }
 }

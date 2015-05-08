@@ -1,23 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Newtonsoft.Json;
 
 namespace TwitchClient
 {
     public partial class WelcomeForm : Form
     {
-        public const string clientId = "po0xacl9h91pa2mfesv2h26l8xwtars";
-        public const string clientSecret = "6lyo34hiygifmcjg7mpysel0z5r9b5a";
+        private const string TargetApplicationScope =
+            "channel_editor+channel_commercial+channel_subscriptions+channel_check_subscription+user_follows_edit+user_blocks_read+user_blocks_edit";
+        private const string ClientId = "po0xacl9h91pa2mfesv2h26l8xwtars";
         private byte[] _buffer;
         private Socket _listener;
-        private string _reqCode;
         private string _response;
 
         public WelcomeForm()
@@ -25,6 +21,7 @@ namespace TwitchClient
             InitializeComponent();
         }
 
+        public string ApplicationScope { get; private set; }
         public bool Success { get; private set; }
         public string AuthToken { get; private set; }
 
@@ -33,6 +30,8 @@ namespace TwitchClient
             get { return twitchUsernameTextBox.Text; }
         }
 
+        #region UI Manipulation
+
         private void WelcomeForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // Quitting the application completely, if the user presses the close button
@@ -40,17 +39,6 @@ namespace TwitchClient
             {
                 Application.Exit();
             }
-        }
-
-        private void connectTwitchButton_Click(object sender, EventArgs e)
-        {
-            // Starting the response server listener
-            InitializeResponseServer(IPAddress.Parse("127.0.0.1"), 18573);
-
-            // Launching the connect with twitch button
-            Process.Start("https://api.twitch.tv/kraken/oauth2/authorize?response_type=code&client_id=" + clientId +
-                          "&redirect_uri=http://localhost:18573&scope=channel_editor");
-            SetStatus("Waiting for twitch auth...");
         }
 
         private void SetStatus(string status)
@@ -68,15 +56,81 @@ namespace TwitchClient
             }
 
             // Checking if an auth code was generated
-            if (!Success)
+            if (!String.IsNullOrWhiteSpace(twitchResponseTextBox.Text))
             {
-                MessageBox.Show("Please connect using twitch.");
+                string response = twitchResponseTextBox.Text;
+
+                // Checking response length - without content length of format is 21
+                if (response.Length < 22)
+                {
+                    MessageBox.Show(
+                        "Invalid response length, too short.",
+                        "Invalid response - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // format: #access_token={auth token}&scope={scope}
+                // Parsing the response
+                int scopeSegmentIndex = response.IndexOf("&scope=");
+                string scope = response.Substring(scopeSegmentIndex + 7);
+                string authToken = response.Substring(14).Split('&')[0];
+
+                // Checking and updating parameters
+                if (String.IsNullOrWhiteSpace(authToken))
+                {
+                    MessageBox.Show(
+                        "The auth token appears to be invalid.",
+                        "Invalid auth. token - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (!scope.Equals(TargetApplicationScope, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    MessageBox.Show(
+                        "The requested application scope does not match the provided one, as such some features may not function.",
+                        "Request Scope Mismatch - Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                // Updating parameters and continuing
+                ApplicationScope = scope;
+                AuthToken = authToken;
+                Success = true;
+            }
+            else
+            {
+                MessageBox.Show("Please enter the twitch response you got from the browser.");
                 return;
             }
 
-            // Fall-back, good call procedure
+            // Fall-back, `good call` procedure (to resume application)
             Hide();
         }
+
+        private void connectTwitchButton_Click(object sender, EventArgs e)
+        {
+            // Starting the response server listener
+            try
+            {
+                InitializeResponseServer(IPAddress.Parse("127.0.0.1"), 18573);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Unable to initialize HTTP server (on /localhost:18573) to capture Twitch response." +
+                    Environment.NewLine + "Error: " + ex.Message, "HTTPD Init - Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Exit();
+            }
+
+            // Launching the connect with twitch button
+            Process.Start("https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=" + ClientId +
+                          "&redirect_uri=http://localhost:18573&scope=" + TargetApplicationScope);
+            SetStatus("Waiting for twitch response...");
+        }
+
+        #endregion
+
+        #region HTTP response processing pipeline
 
         private void InitializeResponseServer(IPAddress ip, int port)
         {
@@ -101,30 +155,13 @@ namespace TwitchClient
         private void ReceiveDataAsyncCallback(IAsyncResult ar)
         {
             var remoteSocket = (Socket) ar.AsyncState;
-            int resp = remoteSocket.EndReceive(ar);
-            string payload = Encoding.UTF8.GetString(_buffer);
-            // Console.WriteLine(payload);
+            remoteSocket.EndReceive(ar);
+            //string payload = Encoding.UTF8.GetString(_buffer);
 
-            foreach (string line in Regex.Split(payload, Environment.NewLine))
-            {
-                // Parsing call-back info
-                if (!line.StartsWith("GET"))
-                    continue;
-
-                // GET / HTTP/1.1 - /?code=[CODE]&scope=[SCOPE]
-                string code = line.Substring(11, line.IndexOf("&", StringComparison.Ordinal) - 11);
-                _reqCode = code;
-
-                // Updating data
-                Debug.WriteLine("Req. code captured through http twitch api callback.");
-                SetStatus("Req. code captured.");
-
-                // Sending back a success message and continuing process
-                GenerateResponse();
-                remoteSocket.BeginSend(Encoding.UTF8.GetBytes(_response), 0, _response.Length, SocketFlags.None,
-                    SendDataAsyncCallback, remoteSocket);
-                return;
-            }
+            // Sending back a success message and continuing process
+            GenerateResponse();
+            remoteSocket.BeginSend(Encoding.UTF8.GetBytes(_response), 0, _response.Length, SocketFlags.None,
+                SendDataAsyncCallback, remoteSocket);
         }
 
         private void SendDataAsyncCallback(IAsyncResult ar)
@@ -133,46 +170,29 @@ namespace TwitchClient
             var remoteSocket = (Socket) ar.AsyncState;
             remoteSocket.Close();
 
-            // Requesting auth token
-            Debug.WriteLine("Requesting auth code.");
-
-            using (var client = new WebClient())
-            {
-                byte[] response =
-                    client.UploadValues("https://api.twitch.tv/kraken/oauth2/token", new NameValueCollection
-                    {
-                        {"client_id", clientId},
-                        {"client_secret", clientSecret},
-                        {"grant_type", "authorization_code"},
-                        {"redirect_uri", "http://localhost:18573"},
-                        {"code", _reqCode}
-                    });
-
-                // Parsing response
-                string json = Encoding.UTF8.GetString(response);
-                var resp = JsonConvert.DeserializeObject<ResponseJsonObject>(json);
-
-                // Updating auth token
-                AuthToken = resp.access_token;
-                Success = true;
-            }
-
-            // Updating status, etc
-            _listener.Close();
-            Debug.WriteLine("Remote http socket closed.");
-            SetStatus("Done");
+            // Updating status
+            SetStatus("Waiting for user response...");
         }
+
+        #endregion
+
+        #region Response Generation
 
         private void GenerateResponse()
         {
+            // XXX improve generation + make page look better
             // Headers
             AppendHeader("HTTP/1.1 200 OK");
             AppendHeader("Connection: close");
             AppendHeader("Date: " + DateTime.Now.ToUniversalTime().ToString("r"));
 
-            // Html
+            // HTML/JS
+            const string responseMessage =
+                "<span style=\"font-size:16px;\">twitch-client has received the auth token response. please copy the message below into twitch-client.</span><br/>";
+            const string writeResponseJs =
+                "<span style=\"font-size:10px;\"><script>document.write(document.location.hash);</script></span>";
             _response += Environment.NewLine +
-                         "<!DOCTYPE html><html><body>twitch-client has received the authorization code, you can safely now close this window.</body></html>";
+                         "<!DOCTYPE html><html><body>" + responseMessage + writeResponseJs + "</body></html>";
         }
 
         private void AppendHeader(string header)
@@ -180,11 +200,6 @@ namespace TwitchClient
             _response += header + Environment.NewLine;
         }
 
-        public class ResponseJsonObject
-        {
-            public string access_token { get; set; }
-            public string refresh_token { get; set; }
-            public List<string> scope { get; set; }
-        }
+        #endregion
     }
 }
