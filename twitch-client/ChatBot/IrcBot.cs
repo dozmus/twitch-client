@@ -79,7 +79,7 @@ namespace TwitchClient.ChatBot
             // Initialising operational threads
             _thread = new Thread(Run)
             {
-                Name = "ChatBot_IrcThread"
+                Name = "ChatBot_IrcCommsThread"
             };
             _thread.Start();
             return true;
@@ -99,7 +99,7 @@ namespace TwitchClient.ChatBot
 #endif
 
             // Blocking for on-connect message - >> :tmi.twitch.tv 001 <nickname> :<welcome message>
-            while (!_reader.ReadLine().Contains("001"))
+            while (!_reader.ReadLine().Contains("001")) // TODO handle if this is never received, etc
             {
             }
 
@@ -109,155 +109,167 @@ namespace TwitchClient.ChatBot
             AppendText("Chat bot is now connected.");
 
             // Read loop
+            int restTimer = 5;
+
             while (Connected)
             {
-                // Sleep to reduce CPU stress, at start because some loops are skipped
-                Thread.Sleep(1);
+                ProcessLoop();
 
-                // Ping-pong initiation
-                if (Environment.TickCount - _lastPing > 25000)
+                // Processing line if there is any thing to read
+                if (_client.Available > 0 || _reader.Peek() != -1) // XXX latter condition useless?
                 {
-                    WriteLineFlush("PING LAG" + DateHelper.UnixTimestampNow());
-                    _lastPing = Environment.TickCount;
+                    ProcessLine(_reader.ReadLine());
                 }
 
-                // Checking if we should spit a random notification
-                if (RandomNotifications.Count > 0 &&
-                    Environment.TickCount - _lastRandomNotification > RandomNotificationCooldown)
+                // Throttling processing to reduce CPU load
+                if (restTimer-- == 5)
                 {
-                    SendMessageFlush(RandomNotifications[_random.Next(RandomNotifications.Count + 1)]);
-                    _lastRandomNotification = Environment.TickCount;
+                    Thread.Sleep(1);
+                    restTimer = 5;
                 }
+            }
+        }
 
-                // Checking if there is anything to read
-                string line = "";
-                
-                // Checking if there is input
-                if (_client.Available == 0 && String.IsNullOrEmpty((line = _reader.ReadLine())))
-                    continue;
+        private void ProcessLoop()
+        {
+            // Ping-pong initiation
+            if (Environment.TickCount - _lastPing > 25000)
+            {
+                WriteLineFlush("PING LAG" + DateHelper.UnixTimestampNow());
+                _lastPing = Environment.TickCount;
+            }
+
+            // Checking if we should spit a random notification
+            if (RandomNotifications.Count > 0 &&
+                Environment.TickCount - _lastRandomNotification > RandomNotificationCooldown)
+            {
+                lock (RandomNotifications)
+                {
+                    SendMessageFlush(RandomNotifications[_random.Next(RandomNotifications.Count)]);
+                }
+                _lastRandomNotification = Environment.TickCount;
+            }
+        }
+
+        private void ProcessLine(string line)
+        {
+            if (String.IsNullOrEmpty(line))
+                return;
 
 #if DEBUG
-                // Debug.WriteLine(">> " + line);
+            // Debug.WriteLine(">> " + line);
 #endif
 
-                // Normalising line
-                if (line.StartsWith(":"))
-                {
-                    line = line.Substring(1);
-                }
+            // Normalising line
+            if (line.StartsWith(":"))
+            {
+                line = line.Substring(1);
+            }
 
-                // Ping-pong response
-                if (line.StartsWith("PING"))
-                {
-                    WriteLineFlush(line.Replace("PING", "PONG"));
-                    _lastServerPing = Environment.TickCount;
-                }
+            // Ping-pong response
+            if (line.StartsWith("PING"))
+            {
+                WriteLineFlush(line.Replace("PING", "PONG"));
+                _lastServerPing = Environment.TickCount;
+            }
 
-                if (line.StartsWith("PONG"))
-                {
-                    _lastServerPing = Environment.TickCount;
-                }
+            if (line.StartsWith("PONG"))
+            {
+                _lastServerPing = Environment.TickCount;
+            }
 
-                // Regular message parsing
-                string[] explode = line.Split(' ');
+            // Regular message parsing
+            string[] explode = line.Split(' ');
 
-                if (explode.Length < 2)
-                {
-                    return;
-                }
-                string sender = explode[0];
-                string command = explode[1];
 
-                switch (command) // XXX make an OOP command handler
-                {
-                    case "353": // Initial users list
-                        string users = line.Substring(line.IndexOf(':') + 1);
-                        string[] nickList = users.Split(' ');
+            if (explode.Length < 2)
+                return;
+            string sender = explode[0];
+            string command = explode[1];
 
-                        foreach (string nickname in nickList)
-                        {
-                            AddUser(nickname);
-                        }
-                        break;
-                    case "JOIN":
-                        // Parsing input
-                        string nick = sender.Substring(0, sender.IndexOf('!'));
+            switch (command) // XXX make an OOP command handler
+            {
+                case "353": // Initial users list
+                    string users = line.Substring(line.IndexOf(':') + 1);
+                    string[] nickList = users.Split(' ');
 
-                        // Updating UI
-                        AppendTextPrefixNewLine("* Join: " + nick);
-                        AddUser(nick);
-                        break;
-                    case "PART":
-                        // Parsing input
-                        nick = sender.Substring(0, sender.IndexOf('!'));
+                    foreach (string nickname in nickList)
+                    {
+                        AddUser(nickname);
+                    }
+                    break;
+                case "JOIN":
+                    // Parsing input
+                    string nick = sender.Substring(0, sender.IndexOf('!'));
 
-                        // Updating UI
-                        AppendTextPrefixNewLine("* Part: " + nick);
-                        RemoveUser(nick);
-                        RemoveUser("@" + nick);
-                        break;
-                    case "QUIT":
-                        // XXX impl - i dont think twitch even uses quit?
-                        break;
-                    case "MODE":
-                        // :jtv MODE #absorbicapple +o purenomsain
-                        nick = explode[4];
+                    // Updating UI
+                    AppendTextPrefixNewLine("* Join: " + nick);
+                    AddUser(nick);
+                    break;
+                case "PART":
+                    // Parsing input
+                    nick = sender.Substring(0, sender.IndexOf('!'));
 
-                        switch (explode[3])
-                        {
-                            case "+o": // Give mod
-                                RemoveUser(nick);
-                                AddUser("@" + nick);
-                                AppendTextPrefixNewLine("* Modded: " + nick);
+                    // Updating UI
+                    AppendTextPrefixNewLine("* Part: " + nick);
+                    RemoveUser(nick);
+                    RemoveUser("@" + nick);
+                    break;
+                case "MODE":
+                    // jtv MODE {channel} {mode} {nick}
+                    nick = explode[4];
 
-                                // Checking if we were modded, if so enabling the mod context menu for the users list
-                                if (nick.Equals(_nickname, StringComparison.CurrentCultureIgnoreCase))
-                                {
-                                    _masterForm.SetUsersListContextMenuItemsEnabled(true);
-                                }
-                                break;
-                            case "-o": // Remove mod
-                                RemoveUser("@" + nick);
-                                AddUser(nick);
-                                AppendTextPrefixNewLine("* Unmodded: " + nick);
-                                break;
-                        }
-                        break;
-                    case "PRIVMSG":
-                        // Parsing input
-                        nick = sender.Substring(0, sender.IndexOf('!'));
-                        int messageStartIndex = line.IndexOf(':') + 1;
-                        string message = line.Substring(messageStartIndex);
+                    switch (explode[3])
+                    {
+                        case "+o": // Give mod
+                            RemoveUser(nick);
+                            AddUser("@" + nick);
+                            AppendTextPrefixNewLine("* Modded: " + nick);
 
-                        // Updating UI
-                        AppendTextPrefixNewLine(String.Format("<{0}> {1}", nick, message));
-
-                        // Replying to message if necessary
-                        if (message.StartsWith(CommandPrefix))
-                        {
-                            // Echo commands
-                            if (!message.Contains(" "))
+                            // Checking if we were modded, if so enabling the mod context menu for the users list
+                            if (nick.Equals(_nickname, StringComparison.CurrentCultureIgnoreCase))
                             {
-                                message = message.Substring(CommandPrefix.Length); // removing the command prefix
+                                _masterForm.SetUsersListContextMenuItemsEnabled(true);
+                            }
+                            break;
+                        case "-o": // Remove mod
+                            RemoveUser("@" + nick);
+                            AddUser(nick);
+                            AppendTextPrefixNewLine("* Unmodded: " + nick);
+                            break;
+                    }
+                    break;
+                case "PRIVMSG":
+                    // Parsing input
+                    nick = sender.Substring(0, sender.IndexOf('!'));
+                    int messageStartIndex = line.IndexOf(':') + 1;
+                    string message = line.Substring(messageStartIndex);
 
-                                lock (EchoCommands)
+                    // Updating UI
+                    AppendTextPrefixNewLine(String.Format("<{0}> {1}", nick, message));
+
+                    // Replying to message if necessary
+                    if (message.StartsWith(CommandPrefix))
+                    {
+                        // Echo commands
+                        message = message.Substring(CommandPrefix.Length); // removing the command prefix
+
+                        lock (EchoCommands)
+                        {
+                            // Checking if the command exists
+                            if (EchoCommands.ContainsKey(message))
+                            {
+                                int deltaTime = Environment.TickCount - EchoCommandsCooldown[message];
+
+                                if (deltaTime > EchoCommandCooldown)
                                 {
-                                    // Checking if the command exists
-                                    if (EchoCommands.ContainsKey(message))
-                                    {
-                                        int deltaTime = Environment.TickCount - EchoCommandsCooldown[message];
-
-                                        if (deltaTime > EchoCommandCooldown)
-                                        {
-                                            SendMessageFlush(EchoCommands[message]);
-                                            EchoCommandsCooldown[message] = Environment.TickCount;
-                                        }
-                                    }
+                                    SendMessageFlush(EchoCommands[message]);
+                                    EchoCommandsCooldown[message] = Environment.TickCount;
                                 }
                             }
                         }
-                        break;
-                }
+                    }
+                    break;
             }
         }
         #endregion
