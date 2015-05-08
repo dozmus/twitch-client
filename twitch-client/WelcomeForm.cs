@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -11,7 +12,9 @@ namespace TwitchClient
     {
         private const string TargetApplicationScope =
             "channel_editor+channel_commercial+channel_subscriptions+channel_check_subscription+user_follows_edit+user_blocks_read+user_blocks_edit";
+
         private const string ClientId = "po0xacl9h91pa2mfesv2h26l8xwtars";
+        private readonly string _responseHtml;
         private byte[] _buffer;
         private Socket _listener;
         private string _response;
@@ -19,6 +22,31 @@ namespace TwitchClient
         public WelcomeForm()
         {
             InitializeComponent();
+
+            // Checking if the resources path exists
+            string resourcesPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
+
+            if (!Directory.Exists(resourcesPath))
+            {
+                MessageBox.Show("The resources directory is missing, please re-download the application.",
+                    "Resources folder missing - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Directory.CreateDirectory(resourcesPath);
+                Application.Exit();
+            }
+
+            // Reading the html response file, if possible
+            string fileName = Path.Combine(resourcesPath, "twitch_api_response_page.html");
+
+            if (!File.Exists(fileName))
+            {
+                MessageBox.Show("A resource is missing (twitch_api_response_page.html).",
+                    "Resource missing - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Exit();
+            }
+            else
+            {
+                _responseHtml = File.ReadAllText(fileName);
+            }
         }
 
         public string ApplicationScope { get; private set; }
@@ -58,7 +86,7 @@ namespace TwitchClient
             // Checking if an auth code was generated
             if (!String.IsNullOrWhiteSpace(twitchResponseTextBox.Text))
             {
-                string response = twitchResponseTextBox.Text;
+                string response = twitchResponseTextBox.Text.Trim();
 
                 // Checking response length - without content length of format is 21
                 if (response.Length < 22)
@@ -187,12 +215,7 @@ namespace TwitchClient
             AppendHeader("Date: " + DateTime.Now.ToUniversalTime().ToString("r"));
 
             // HTML/JS
-            const string responseMessage =
-                "<span style=\"font-size:16px;\">twitch-client has received the auth token response. please copy the message below into twitch-client.</span><br/>";
-            const string writeResponseJs =
-                "<span style=\"font-size:10px;\"><script>document.write(document.location.hash);</script></span>";
-            _response += Environment.NewLine +
-                         "<!DOCTYPE html><html><body>" + responseMessage + writeResponseJs + "</body></html>";
+            _response += Environment.NewLine + _responseHtml;
         }
 
         private void AppendHeader(string header)

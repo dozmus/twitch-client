@@ -17,7 +17,7 @@ namespace TwitchClient.ChatBot
             // Checking if the emotes directory exists
             if (!Directory.Exists(EmotesDirectory))
             {
-                // TODO spit error
+                Directory.CreateDirectory(EmotesDirectory);
                 return;
             }
 
