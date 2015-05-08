@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>twitch-client</title>
+    <style>
+        body {
+            background-color: #E8D9CB;
+        }
+
+        #box {
+            width: 80%;
+            height: 135px;
+            display: block;
+            background-color: #FFFEDF;
+            text-align: center;
+            align-content: center;
+            margin: auto;
+            padding: 10px 10px 10px 10px;
+        }
+
+        .response_code {
+            font-size: 80%;
+        }
+    </style>
+</head>
+    <body>
+        <div id="box">
+            <h2>twitch-client (<a href="https://github.com/PureCS/twitch-client">Github</a>)</h2>
+            We have received the auth token response, it is located <b>below</b>. Copy it into twitch-client's "Twitch Response" textbox (in the welcome form).<br/>
+
+            <span class="response_code"><script>document.write(document.location.hash);</script></span>
+        </div>
+    </body>
+</html>
