@@ -63,10 +63,14 @@ namespace TwitchClient
             this.addEchoCommandButton = new System.Windows.Forms.Button();
             this.newEchoCommandTextBox = new System.Windows.Forms.TextBox();
             this.echoCommandsListBox = new System.Windows.Forms.ListBox();
+            this.echoCommandsListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.removeEchoCommandToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.randomNotificationsTabPage = new System.Windows.Forms.TabPage();
             this.addRandomNotificationButton = new System.Windows.Forms.Button();
             this.newRandomNotificationTextBox = new System.Windows.Forms.TextBox();
             this.randomNotificationsListBox = new System.Windows.Forms.ListBox();
+            this.randNotificationListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.removeRandNotificationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.masterStatusStrip.SuspendLayout();
@@ -83,7 +87,9 @@ namespace TwitchClient
             this.chatBotSettingsTabControl.SuspendLayout();
             this.chatBotCredsTabPage.SuspendLayout();
             this.echoCommandsTabPage.SuspendLayout();
+            this.echoCommandsListContextMenu.SuspendLayout();
             this.randomNotificationsTabPage.SuspendLayout();
+            this.randNotificationListContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // masterStatusStrip
@@ -385,11 +391,26 @@ namespace TwitchClient
             // 
             // echoCommandsListBox
             // 
+            this.echoCommandsListBox.ContextMenuStrip = this.echoCommandsListContextMenu;
             this.echoCommandsListBox.FormattingEnabled = true;
             this.echoCommandsListBox.Location = new System.Drawing.Point(4, 3);
             this.echoCommandsListBox.Name = "echoCommandsListBox";
             this.echoCommandsListBox.Size = new System.Drawing.Size(368, 173);
             this.echoCommandsListBox.TabIndex = 0;
+            // 
+            // echoCommandsListContextMenu
+            // 
+            this.echoCommandsListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.removeEchoCommandToolStripMenuItem});
+            this.echoCommandsListContextMenu.Name = "echoCommandsListContextMenu";
+            this.echoCommandsListContextMenu.Size = new System.Drawing.Size(118, 26);
+            // 
+            // removeEchoCommandToolStripMenuItem
+            // 
+            this.removeEchoCommandToolStripMenuItem.Name = "removeEchoCommandToolStripMenuItem";
+            this.removeEchoCommandToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.removeEchoCommandToolStripMenuItem.Text = "Remove";
+            this.removeEchoCommandToolStripMenuItem.Click += new System.EventHandler(this.removeEchoCommandToolStripMenuItem_Click);
             // 
             // randomNotificationsTabPage
             // 
@@ -423,11 +444,26 @@ namespace TwitchClient
             // 
             // randomNotificationsListBox
             // 
+            this.randomNotificationsListBox.ContextMenuStrip = this.randNotificationListContextMenu;
             this.randomNotificationsListBox.FormattingEnabled = true;
             this.randomNotificationsListBox.Location = new System.Drawing.Point(4, 3);
             this.randomNotificationsListBox.Name = "randomNotificationsListBox";
             this.randomNotificationsListBox.Size = new System.Drawing.Size(368, 173);
             this.randomNotificationsListBox.TabIndex = 3;
+            // 
+            // randNotificationListContextMenu
+            // 
+            this.randNotificationListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.removeRandNotificationToolStripMenuItem});
+            this.randNotificationListContextMenu.Name = "randNotificationListContextMenu";
+            this.randNotificationListContextMenu.Size = new System.Drawing.Size(118, 26);
+            // 
+            // removeRandNotificationToolStripMenuItem
+            // 
+            this.removeRandNotificationToolStripMenuItem.Name = "removeRandNotificationToolStripMenuItem";
+            this.removeRandNotificationToolStripMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.removeRandNotificationToolStripMenuItem.Text = "Remove";
+            this.removeRandNotificationToolStripMenuItem.Click += new System.EventHandler(this.removeRandNotificationToolStripMenuItem_Click);
             // 
             // updateTimer
             // 
@@ -436,7 +472,7 @@ namespace TwitchClient
             // 
             // followersUpdateTimer
             // 
-            this.followersUpdateTimer.Interval = 15000;
+            this.followersUpdateTimer.Interval = 17500;
             this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
             // 
             // MainForm
@@ -469,8 +505,10 @@ namespace TwitchClient
             this.chatBotCredsTabPage.ResumeLayout(false);
             this.echoCommandsTabPage.ResumeLayout(false);
             this.echoCommandsTabPage.PerformLayout();
+            this.echoCommandsListContextMenu.ResumeLayout(false);
             this.randomNotificationsTabPage.ResumeLayout(false);
             this.randomNotificationsTabPage.PerformLayout();
+            this.randNotificationListContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -516,6 +554,10 @@ namespace TwitchClient
         private System.Windows.Forms.ToolStripMenuItem timeout24hUserToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem banUserToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unbanUserToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip echoCommandsListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem removeEchoCommandToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip randNotificationListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem removeRandNotificationToolStripMenuItem;
     }
 }
 

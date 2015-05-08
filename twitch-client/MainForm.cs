@@ -376,8 +376,14 @@ namespace TwitchClient
             string echoMessage = newEchoCommandTextBox.Text;
             int colonIndex = echoMessage.IndexOf(':');
 
+            if (colonIndex == -1) // XXX error msg
+                return;
+
             string commandName = echoMessage.Substring(0, colonIndex);
             string message = echoMessage.Substring(colonIndex + 1);
+
+            if (String.IsNullOrWhiteSpace(message) || String.IsNullOrWhiteSpace(commandName)) // XXX error msg
+                return;
 
             lock (IrcBot.EchoCommands)
             {
@@ -403,6 +409,9 @@ namespace TwitchClient
             // Trying to add item to list
             string message = newRandomNotificationTextBox.Text;
 
+            if (String.IsNullOrWhiteSpace(message)) // XXX error msg
+                return;
+
             lock (IrcBot.RandomNotifications)
             {
                 // Checking if we can add the entry to the dictionary
@@ -419,6 +428,36 @@ namespace TwitchClient
             // Adding command to list box - assuming success if we got this far
             randomNotificationsListBox.Items.Add(newRandomNotificationTextBox.Text);
             newRandomNotificationTextBox.Text = "";
+        }
+
+        private void removeRandNotificationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            lock (IrcBot.RandomNotifications)
+            {
+                // Fetching entry
+                int index = randomNotificationsListBox.SelectedIndex;
+
+                if (index == -1) // XXX error msg
+                    return;
+
+                // Removing the entry
+                IrcBot.RandomNotifications.Remove(randomNotificationsListBox.Items[index].ToString());
+            }
+        }
+
+        private void removeEchoCommandToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            lock (IrcBot.EchoCommands)
+            {
+                // Fetching entry
+                int index = echoCommandsListBox.SelectedIndex;
+
+                if (index == -1)
+                    return;
+
+                // Removing the entry
+                IrcBot.EchoCommands.Remove(echoCommandsListBox.Items[index].ToString());
+            }
         }
         #endregion
 

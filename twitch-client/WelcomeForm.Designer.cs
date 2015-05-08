@@ -45,7 +45,7 @@
             this.doneButton.Location = new System.Drawing.Point(197, 112);
             this.doneButton.Name = "doneButton";
             this.doneButton.Size = new System.Drawing.Size(75, 23);
-            this.doneButton.TabIndex = 3;
+            this.doneButton.TabIndex = 4;
             this.doneButton.Text = "&Done";
             this.doneButton.UseVisualStyleBackColor = true;
             this.doneButton.Click += new System.EventHandler(this.doneButton_Click);
@@ -92,7 +92,7 @@
             this.lowRamModeCheckBox.Location = new System.Drawing.Point(15, 118);
             this.lowRamModeCheckBox.Name = "lowRamModeCheckBox";
             this.lowRamModeCheckBox.Size = new System.Drawing.Size(103, 17);
-            this.lowRamModeCheckBox.TabIndex = 2;
+            this.lowRamModeCheckBox.TabIndex = 3;
             this.lowRamModeCheckBox.Text = "Low RAM Mode";
             this.lowRamModeCheckBox.UseVisualStyleBackColor = true;
             // 
@@ -110,7 +110,7 @@
             this.twitchResponseTextBox.Location = new System.Drawing.Point(117, 67);
             this.twitchResponseTextBox.Name = "twitchResponseTextBox";
             this.twitchResponseTextBox.Size = new System.Drawing.Size(155, 20);
-            this.twitchResponseTextBox.TabIndex = 5;
+            this.twitchResponseTextBox.TabIndex = 2;
             this.inputToolTip.SetToolTip(this.twitchResponseTextBox, "The response from twitch which was shown to you in your browser.");
             // 
             // inputToolTip
