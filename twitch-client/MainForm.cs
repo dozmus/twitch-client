@@ -29,8 +29,8 @@ namespace TwitchClient
         public ListBox ChatUsersListBox { get { return chatUsersListBox; } }
 
         // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
-        // TODO add feature to remove echo commands/random notifications
         // TODO ignore duplicate follower notifications
+        // TODO add update checking
 
         #region Initialisation
         public MainForm()
@@ -98,7 +98,9 @@ namespace TwitchClient
         #region Custom control bindings
         private void chatBotCredentialsPanelConnectButton_Click(object sender, EventArgs e)
         {
-            // TODO verify input to this function, listen to init response
+            // TODO verify input to this function, then listen to init response
+
+            // Attempting to initialise the bot
             _ircBot.Initialize(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password, _welcomeForm.TwitchUsername,
                 chatBotCredentialsPanel.Hostname, chatBotCredentialsPanel.Port);
         }
@@ -370,20 +372,29 @@ namespace TwitchClient
         #endregion
 
         #region Chat bot settings UI events
+
         private void addEchoCommandButton_Click(object sender, EventArgs e)
         {
             // Trying to add command to dictionary
             string echoMessage = newEchoCommandTextBox.Text;
             int colonIndex = echoMessage.IndexOf(':');
 
-            if (colonIndex == -1) // XXX error msg
+            if (colonIndex == -1) // Checking item format
+            {
+                MessageBox.Show("Invalid item format, try 'command name:message to output'.", "Add Echo Command - Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
 
             string commandName = echoMessage.Substring(0, colonIndex);
             string message = echoMessage.Substring(colonIndex + 1);
 
-            if (String.IsNullOrWhiteSpace(message) || String.IsNullOrWhiteSpace(commandName)) // XXX error msg
+            if (String.IsNullOrWhiteSpace(message) || String.IsNullOrWhiteSpace(commandName))  // Checking item format again
+            {
+                MessageBox.Show("Invalid item, either the command name or the message is invalid.", "Add Echo Command - Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
 
             lock (IrcBot.EchoCommands)
             {
@@ -409,8 +420,12 @@ namespace TwitchClient
             // Trying to add item to list
             string message = newRandomNotificationTextBox.Text;
 
-            if (String.IsNullOrWhiteSpace(message)) // XXX error msg
+            if (String.IsNullOrWhiteSpace(message)) // Checking if item is valid
+            {
+                MessageBox.Show("Random notification item is invalid.", "Add Random Notification - Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
 
             lock (IrcBot.RandomNotifications)
             {
@@ -437,8 +452,11 @@ namespace TwitchClient
                 // Fetching entry
                 int index = randomNotificationsListBox.SelectedIndex;
 
-                if (index == -1) // XXX error msg
+                if (index == -1)
+                {
+                    MessageBox.Show("No random notification item is selected.", "Remove Random Notification - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
+                }
 
                 // Removing the entry
                 IrcBot.RandomNotifications.Remove(randomNotificationsListBox.Items[index].ToString());
@@ -453,7 +471,10 @@ namespace TwitchClient
                 int index = echoCommandsListBox.SelectedIndex;
 
                 if (index == -1)
+                {
+                    MessageBox.Show("No echo command item is selected.", "Remove Echo Command - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
+                }
 
                 // Removing the entry
                 IrcBot.EchoCommands.Remove(echoCommandsListBox.Items[index].ToString());
@@ -481,7 +502,7 @@ namespace TwitchClient
         {
             if (chatUsersListBox.SelectedItem == null)
                 return;
-            string targetNick = chatUsersListBox.SelectedItem.ToString(); // XXX we dont handle banning mods (@{nick}) since you cant as a mod
+            string targetNick = chatUsersListBox.SelectedItem.ToString(); // We dont handle banning mods (@{nick}) since you cant as a mod
             _ircBot.SendTimeout(targetNick, "1");
         }
 
