@@ -208,11 +208,11 @@ namespace TwitchClient
 
         private void GenerateResponse()
         {
-            // XXX improve generation + make page look better
             // Headers
             AppendHeader("HTTP/1.1 200 OK");
             AppendHeader("Connection: close");
             AppendHeader("Date: " + DateTime.Now.ToUniversalTime().ToString("r"));
+            AppendHeader("Content-Length: " + _responseHtml.Length);
 
             // HTML/JS
             _response += Environment.NewLine + _responseHtml;

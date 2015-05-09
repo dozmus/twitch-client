@@ -560,18 +560,16 @@ namespace TwitchClient
             var root = await GithubApi.GetLatestReleaseJsonObject();
 
             // Checking version
+            if (root == null)
+            {
+                MessageBox.Show("Unable to fetch updates. You can manually look for updates at: https://github.com/PureCS/twitch-client/releases", "Check for Updates - Error", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
             string currentVersion = "v" + Application.ProductVersion;
-
-            if (currentVersion.Equals(root.tag_name))
-            {
-                MessageBox.Show("Your software is up to date!", "Check for Updates", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show("Your software is out of date. The newest version is " + root.tag_name + ", available at: " + root.html_url, "Check for Updates", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
+            string caption = currentVersion.Equals(root.tag_name, StringComparison.CurrentCultureIgnoreCase) ? "Your software is up to date!" : "Your software is out of date. The newest version is ";
+            MessageBox.Show(caption, "Check for Updates", MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
     }
 }
