@@ -73,6 +73,8 @@ namespace TwitchClient
             this.removeRandNotificationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.masterStatusStrip.SuspendLayout();
             this.masterMenuStrip.SuspendLayout();
             this.tabControl.SuspendLayout();
@@ -110,7 +112,8 @@ namespace TwitchClient
             // masterMenuStrip
             // 
             this.masterMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.updatingToolStripMenuItem});
+            this.updatingToolStripMenuItem,
+            this.helpToolStripMenuItem});
             this.masterMenuStrip.Location = new System.Drawing.Point(0, 0);
             this.masterMenuStrip.Name = "masterMenuStrip";
             this.masterMenuStrip.Size = new System.Drawing.Size(549, 24);
@@ -475,6 +478,21 @@ namespace TwitchClient
             this.followersUpdateTimer.Interval = 17500;
             this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
             // 
+            // helpToolStripMenuItem
+            // 
+            this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.checkForUpdatesToolStripMenuItem});
+            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Text = "Help";
+            // 
+            // checkForUpdatesToolStripMenuItem
+            // 
+            this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
+            this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.checkForUpdatesToolStripMenuItem.Text = "Check for Updates";
+            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -558,6 +576,8 @@ namespace TwitchClient
         private System.Windows.Forms.ToolStripMenuItem removeEchoCommandToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip randNotificationListContextMenu;
         private System.Windows.Forms.ToolStripMenuItem removeRandNotificationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem checkForUpdatesToolStripMenuItem;
     }
 }
 

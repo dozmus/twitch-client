@@ -13,7 +13,6 @@ namespace TwitchClient.ChatBot
     {
         // TODO throttle writing
         // TODO error handling, handle ping timeouts, reconnecting, etc
-        // XXX HANDLE error logging in >> :tmi.twitch.tv NOTICE * :Error logging in
         // TODO add twitch emotes/rank images (turbo, mod, etc) to rtb
 
         public static Dictionary<string, string> EchoCommands = new Dictionary<string, string>();
@@ -40,7 +39,7 @@ namespace TwitchClient.ChatBot
         public IrcBot(MainForm master)
         {
             // Initialising socket
-            _client = new TcpClient(); // XXX use udp?
+            _client = new TcpClient();
             _masterForm = master;
         }
 
@@ -99,7 +98,7 @@ namespace TwitchClient.ChatBot
 #endif
 
             // Blocking for on-connect message - >> :tmi.twitch.tv 001 <nickname> :<welcome message>
-            while (!_reader.ReadLine().Contains("001")) // TODO handle if this is never received, etc
+            while (!_reader.ReadLine().Contains("001")) // TODO handle if this is never received and if error logging in: >> :tmi.twitch.tv NOTICE * :Error logging in
             {
             }
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using TwitchClient.ChatBot;
+using TwitchClient.Github;
 using TwitchClient.Json;
 
 namespace TwitchClient
@@ -30,7 +31,6 @@ namespace TwitchClient
 
         // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
         // TODO ignore duplicate follower notifications
-        // TODO add update checking
 
         #region Initialisation
         public MainForm()
@@ -553,5 +553,25 @@ namespace TwitchClient
             _ircBot.SendUnban(targetNick);
         }
         #endregion
+
+        private async void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Fetching json
+            var root = await GithubApi.GetLatestReleaseJsonObject();
+
+            // Checking version
+            string currentVersion = "v" + Application.ProductVersion;
+
+            if (currentVersion.Equals(root.tag_name))
+            {
+                MessageBox.Show("Your software is up to date!", "Check for Updates", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Your software is out of date. The newest version is " + root.tag_name + ", available at: " + root.html_url, "Check for Updates", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+        }
     }
 }

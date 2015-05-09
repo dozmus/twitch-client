@@ -50,6 +50,8 @@
   <ItemGroup>
     <Compile Include="ChatBot\EmoteCache.cs" />
     <Compile Include="ChatBot\IrcBot.cs" />
+    <Compile Include="Github\GithubApi.cs" />
+    <Compile Include="Github\LatestReleaseJsonObject.cs" />
     <Compile Include="Json\BaseChannelJsonObject.cs" />
     <Compile Include="Json\FollowersJsonObject.cs" />
     <Compile Include="MainForm.cs">
@@ -128,7 +130,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
