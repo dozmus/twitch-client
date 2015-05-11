@@ -18,9 +18,10 @@ twitch-client is a desktop application with the purpose of replacing most twitch
 * You will be redirected to a custom page which will contain the response code which you must paste into the 'Twitch Response' field in the twitch-client.
 * Click done
 
-### Mini Explanations
-* Low RAM mode - disables stream preview (saves a lot of RAM)
-* Certain fields will be set to '?' if they are inaccessible.
+### Mini Explanations/Troubleshooting
+* Low RAM mode - disables stream preview (saves a lot of RAM).
+* Stream preview requires you to have IE installed with a compatible flash version for it.
+* Certain fields will be set to '?' if they are inaccessible at the moment.
 * The chat box's user list's management options are disabled until the chat bot receives moderator status.
 * To create a chat bot, create a new twitch account with the desired chat bot name, etc. Then retrieve the password for the twitch-client password field from this [site](http://twitchapps.com/tmi/) (format should be 'oauth:[code]', which should **all** be pasted into the field).
 * The application's scope includes some currently unused features.

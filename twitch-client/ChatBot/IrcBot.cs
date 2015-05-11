@@ -9,32 +9,31 @@ using TwitchClient.Util;
 
 namespace TwitchClient.ChatBot
 {
-    class IrcBot
+    internal class IrcBot
     {
         // TODO throttle writing
         // TODO error handling, handle ping timeouts, reconnecting, etc
         // TODO add twitch emotes/rank images (turbo, mod, etc) to rtb
 
-        public static Dictionary<string, string> EchoCommands = new Dictionary<string, string>();
-        public static Dictionary<string, int> EchoCommandsCooldown = new Dictionary<string, int>();
-        public static List<string> RandomNotifications = new List<string>(); 
         private const string CommandPrefix = "!";
         private const int EchoCommandCooldown = 35000;
         private const int RandomNotificationCooldown = 120000;
+        private const int MaxChatBoxLines = 1000;
+        public static Dictionary<string, string> EchoCommands = new Dictionary<string, string>();
+        public static Dictionary<string, int> EchoCommandsCooldown = new Dictionary<string, int>();
+        public static List<string> RandomNotifications = new List<string>();
         private readonly TcpClient _client;
-        private int _lastPing;
-        private int _lastServerPing;
-        private int _lastRandomNotification;
-        private Thread _thread;
-        private StreamWriter _writer;
-        private StreamReader _reader;
+        private readonly MainForm _masterForm;
+        private readonly Random _random = new Random();
         private string _channel;
+        private int _lastPing;
+        private int _lastRandomNotification;
+        private int _lastServerPing;
         private string _nickname;
         private string _password;
-        private readonly Random _random = new Random();
-        public bool Connected { get; private set; }
-        private readonly MainForm _masterForm;
-        private const int MaxChatBoxLines = 1000;
+        private StreamReader _reader;
+        private Thread _thread;
+        private StreamWriter _writer;
 
         public IrcBot(MainForm master)
         {
@@ -44,6 +43,7 @@ namespace TwitchClient.ChatBot
         }
 
         #region Core functionality
+
         public bool Initialize(string nickname, string password, string channel, string hostname, int port)
         {
             // TODO handle reconnects
@@ -53,7 +53,8 @@ namespace TwitchClient.ChatBot
             _password = password;
 
 #if DEBUG
-            Debug.WriteLine("Chat bot initialized with settings: (nick:" + _nickname + ",channel:" + _channel + ",host:" + hostname + ",port:" + port + ")");
+            Debug.WriteLine("Chat bot initialized with settings: (nick:" + _nickname + ",channel:" + _channel + ",host:" +
+                            hostname + ",port:" + port + ")");
 #endif
 
             try
@@ -65,7 +66,9 @@ namespace TwitchClient.ChatBot
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An unhandled critical error occured while trying to connect the IRC bot to the Twitch IRC server." + Environment.NewLine
+                MessageBox.Show(
+                    "An unhandled critical error occured while trying to connect the IRC bot to the Twitch IRC server." +
+                    Environment.NewLine
                     + "Error Message: " + ex.Message, "IRC Bot - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 // Terminating session since critical error
@@ -78,7 +81,7 @@ namespace TwitchClient.ChatBot
             // Initialising operational threads
             _thread = new Thread(Run)
             {
-                Name = "ChatBot_IrcCommsThread"
+                Name = "CHANBOT_PROCESSING_THREAD"
             };
             _thread.Start();
             return true;
@@ -87,7 +90,7 @@ namespace TwitchClient.ChatBot
         public void Run()
         {
             // Initialising session
-            _lastPing = _lastServerPing =_lastRandomNotification = Environment.TickCount;
+            _lastPing = _lastServerPing = _lastRandomNotification = Environment.TickCount;
             _writer.WriteLine("PASS " + _password);
             _writer.WriteLine("NICK " + _nickname);
             _writer.WriteLine("JOIN " + _channel);
@@ -96,10 +99,33 @@ namespace TwitchClient.ChatBot
 #if DEBUG
             Debug.WriteLine("Chat bot is now connecting.");
 #endif
+            // Stalling for connection response
+            string line = String.Empty;
+            bool success = true;
 
-            // Blocking for on-connect message - >> :tmi.twitch.tv 001 <nickname> :<welcome message>
-            while (!_reader.ReadLine().Contains("001")) // TODO handle if this is never received and if error logging in: >> :tmi.twitch.tv NOTICE * :Error logging in
+            while (!String.IsNullOrEmpty((line = _reader.ReadLine())))
             {
+                // On-connect message - :tmi.twitch.tv 001 <nickname> :<welcome message>
+                if (line.Contains("001"))
+                {
+                    break;
+                }
+
+                // Invalid password - :tmi.twitch.tv NOTICE * :Error logging in
+                if (line.Contains("Error logging in"))
+                {
+                    MessageBox.Show("Invalid password for channel bot - connection terminated by twitch.", "Error!",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    success = false;
+                    break;
+                }
+            }
+
+            // Checking if an error occured in the previous step
+            if (!success || !_client.Connected)
+            {
+                Debug.WriteLine("Chat bot connection terminated.");
+                return;
             }
 
 #if DEBUG
@@ -271,10 +297,12 @@ namespace TwitchClient.ChatBot
                     break;
             }
         }
+
         #endregion
 
         #region Socket Writing
-        private void SendMessageFlush(string message)
+
+        public void SendMessageFlush(string message)
         {
             // PRIVMSG <channel> :<msg>
             WriteLineFlush("PRIVMSG " + _channel + " :" + message);
@@ -326,13 +354,17 @@ namespace TwitchClient.ChatBot
                 if (!_client.Connected)
                 {
                     Connected = false;
-                    MessageBox.Show("The IRC server connection was terminated during a message write event." + Environment.NewLine + "Error Message: " + e.Message, "IRC Bot - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(
+                        "The IRC server connection was terminated during a message write event." + Environment.NewLine +
+                        "Error Message: " + e.Message, "IRC Bot - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
+
         #endregion
 
         #region UI manipulation
+
         private void AppendText(string text)
         {
             _AppendText(String.Format("[{0}] {1}", DateTime.Now, text));
@@ -345,7 +377,7 @@ namespace TwitchClient.ChatBot
 
         private void _AppendText(string text)
         {
-            _masterForm.ChatRichTextBox.Invoke((MethodInvoker)(() =>
+            _masterForm.ChatRichTextBox.Invoke((MethodInvoker) (() =>
             {
                 _masterForm.ChatRichTextBox.Text += text; // to avoid scrolling to end, like when using (RTB).AppendText
 
@@ -372,7 +404,7 @@ namespace TwitchClient.ChatBot
 
         private void AddUser(string nickname)
         {
-            _masterForm.ChatUsersListBox.Invoke((MethodInvoker)(() =>
+            _masterForm.ChatUsersListBox.Invoke((MethodInvoker) (() =>
             {
                 if (!_masterForm.ChatUsersListBox.Items.Contains(nickname))
                     _masterForm.ChatUsersListBox.Items.Add(nickname);
@@ -381,12 +413,15 @@ namespace TwitchClient.ChatBot
 
         private void RemoveUser(string nickname)
         {
-            _masterForm.ChatUsersListBox.Invoke((MethodInvoker)(() =>
+            _masterForm.ChatUsersListBox.Invoke((MethodInvoker) (() =>
             {
                 if (_masterForm.ChatUsersListBox.Items.Contains(nickname))
                     _masterForm.ChatUsersListBox.Items.Remove(nickname);
             }));
         }
+
         #endregion
+
+        public bool Connected { get; private set; }
     }
 }

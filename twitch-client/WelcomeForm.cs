@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -47,6 +48,34 @@ namespace TwitchClient
             {
                 _responseHtml = File.ReadAllText(fileName);
             }
+
+            // Checking total system RAM and thus determining if low ram mode should be checked by default
+            string currRamAmt = GetFreeMemory();
+
+            if (!String.IsNullOrEmpty(currRamAmt))
+            {
+                if (int.Parse(currRamAmt)/1024 < 2) // free ram in gb
+                {
+                    lowRamModeCheckBox.Checked = true;
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Fetches the available amount of RAM in KB.
+        /// </summary>
+        /// <returns>Free RAM in KB (standby + free).</returns>
+        private string GetFreeMemory()
+        {
+            var wql = new ObjectQuery("SELECT * FROM Win32_OperatingSystem");
+            var searcher = new ManagementObjectSearcher(wql);
+            var results = searcher.Get();
+
+            foreach (var result in results)
+            {
+                return result["FreePhysicalMemory"].ToString();
+            }
+            return String.Empty;
         }
 
         public string ApplicationScope { get; private set; }
@@ -184,7 +213,7 @@ namespace TwitchClient
         {
             var remoteSocket = (Socket) ar.AsyncState;
             remoteSocket.EndReceive(ar);
-            //string payload = Encoding.UTF8.GetString(_buffer);
+            // string payload = Encoding.UTF8.GetString(_buffer);
 
             // Sending back a success message and continuing process
             GenerateResponse();

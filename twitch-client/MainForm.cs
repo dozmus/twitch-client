@@ -14,25 +14,31 @@ namespace TwitchClient
     public partial class MainForm : Form
     {
         private readonly string _baseApiUrl = "https://api.twitch.tv/kraken/streams?channel=";
-        private readonly string _latestFollowersApiUrl = "https://api.twitch.tv/kraken/channels/{username}/follows?direction=DESC&limit={amount}&offset=0";
+
         private readonly WebClient _baseChannelJsonObjectClient = new WebClient();
         private readonly WebClient _followersJsonObjectClient = new WebClient();
-        private readonly WelcomeForm _welcomeForm = new WelcomeForm();
         private readonly IrcBot _ircBot;
-        private bool _updatingFollowers;
+
+        private readonly string _latestFollowersApiUrl =
+            "https://api.twitch.tv/kraken/channels/{username}/follows?direction=DESC&limit={amount}&offset=0";
+
+        private readonly Random _random = new Random();
+        private readonly WelcomeForm _welcomeForm = new WelcomeForm();
         private bool _updatingBaseStats;
+        private bool _updatingFollowers;
 
         public RichTextBox ChatRichTextBox
         {
             get { return chatRichTextBox; }
         }
 
-        public ListBox ChatUsersListBox { get { return chatUsersListBox; } }
-
-        // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
-        // TODO ignore duplicate follower notifications
+        public ListBox ChatUsersListBox
+        {
+            get { return chatUsersListBox; }
+        }
 
         #region Initialisation
+
         public MainForm()
         {
             InitializeComponent();
@@ -81,7 +87,8 @@ namespace TwitchClient
 
             // Loading preview page
 #if DEBUG
-            watchStreamPanel.SetBrowserHtml("<!DOCTYPE html><html><body style=\"background-color:#000;font-size:32px;color:#fff;\">Stream preview here.</body></html>");
+            watchStreamPanel.SetBrowserHtml(
+                "<!DOCTYPE html><html><body style=\"background-color:#000;font-size:32px;color:#fff;\">Stream preview here.</body></html>");
 #else
             if (!_welcomeForm.lowRamModeCheckBox.Checked) // not navigating to the stream, to save RAM usage
             {
@@ -93,15 +100,18 @@ namespace TwitchClient
             }
 #endif
         }
+
         #endregion
 
         #region Custom control bindings
+
         private void chatBotCredentialsPanelConnectButton_Click(object sender, EventArgs e)
         {
             // TODO verify input to this function, then listen to init response
 
             // Attempting to initialise the bot
-            _ircBot.Initialize(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password, _welcomeForm.TwitchUsername,
+            _ircBot.Initialize(chatBotCredentialsPanel.Nickname, chatBotCredentialsPanel.Password,
+                _welcomeForm.TwitchUsername,
                 chatBotCredentialsPanel.Hostname, chatBotCredentialsPanel.Port);
         }
 
@@ -127,14 +137,16 @@ namespace TwitchClient
             if (!String.IsNullOrWhiteSpace(updateBroadcastingInfoPanel.GameText)) // Broadcast Game
             {
                 // handling chained requests
-                getComponents += (getComponents.Length == 0 ? "" : "&") + "channel[game]=" + Uri.EscapeDataString(updateBroadcastingInfoPanel.GameText);
+                getComponents += (getComponents.Length == 0 ? "" : "&") + "channel[game]=" +
+                                 Uri.EscapeDataString(updateBroadcastingInfoPanel.GameText);
             }
 
             // Preparing request
-            var extension = _welcomeForm.TwitchUsername + "?" + getComponents + "&oauth_token=" + _welcomeForm.AuthToken + "&_method=put";
-            var url = "https://api.twitch.tv/kraken/channels/" + extension;
+            string extension = _welcomeForm.TwitchUsername + "?" + getComponents + "&oauth_token=" +
+                               _welcomeForm.AuthToken + "&_method=put";
+            string url = "https://api.twitch.tv/kraken/channels/" + extension;
 
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            var request = (HttpWebRequest) WebRequest.Create(url);
             request.Timeout = 1500;
             request.Method = "GET";
             request.Accept = "application/vnd.twitchtv.v2+json";
@@ -142,7 +154,7 @@ namespace TwitchClient
             // Reading response
             try
             {
-                using (var resp = request.GetResponse())
+                using (WebResponse resp = request.GetResponse())
                 {
                 }
             }
@@ -174,14 +186,16 @@ namespace TwitchClient
                 MessageBox.Show("(Unhandled) Error Message: " + ex.Message, "HTTP GET - Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            
+
             // Clearing text boxes
             updateBroadcastingInfoPanel.ClearGameTextBox();
             updateBroadcastingInfoPanel.ClearTitleTextBox();
         }
+
         #endregion
 
         #region Timer tick/start/stop events
+
         private void updateTimer_Tick(object sender, EventArgs e)
         {
             if (_updatingBaseStats)
@@ -223,9 +237,11 @@ namespace TwitchClient
             }
             toggleFollowersToolStripMenuItem.Checked = !toggleFollowersToolStripMenuItem.Checked;
         }
+
         #endregion
 
         #region Recent followers updating
+
         private void DownloadFollowersJsonObject()
         {
             _followersJsonObjectClient.DownloadStringTaskAsync(new Uri(_latestFollowersApiUrl));
@@ -263,7 +279,7 @@ namespace TwitchClient
             // Updating recent followers info
             string text = String.Empty;
 
-            foreach (var follower in json.follows)
+            foreach (FollowersJsonObject.Follow follower in json.follows)
             {
                 // Formatting follow date - format: 2015-05-04T16:56:38Z
                 string createdAt = follower.created_at;
@@ -274,17 +290,19 @@ namespace TwitchClient
                 // Appending to current text block
                 text += String.Format("{0} {1}{2}", createdAt, follower.user.display_name, Environment.NewLine);
             }
-            text = text.TrimEnd(new[] { '\r', '\n' }); // removing the new line at the end
-            followersTextBox.Invoke((MethodInvoker)(() => followersTextBox.Text = text));
+            text = text.TrimEnd(new[] {'\r', '\n'}); // removing the new line at the end
+            followersTextBox.Invoke((MethodInvoker) (() => followersTextBox.Text = text));
             _updatingFollowers = false;
 
 #if DEBUG
             Debug.WriteLine("Completed Task(UPDATE_RECENT_FOLLOWERS)");
 #endif
         }
+
         #endregion
 
         #region Base stats updating
+
         private void DownloadBaseChannelJsonObject()
         {
             _baseChannelJsonObjectClient.DownloadStringTaskAsync(new Uri(_baseApiUrl));
@@ -318,7 +336,7 @@ namespace TwitchClient
                 _updatingBaseStats = false;
                 return;
             }
-            var stream = json.streams[0];
+            BaseChannelJsonObject.Stream stream = json.streams[0];
 
             // Updating the status main stats label
             UpdateMainStatsLabel(stream);
@@ -335,14 +353,16 @@ namespace TwitchClient
             Debug.WriteLine("Completed Task(UPDATE_BASE_STATS)");
 #endif
         }
+
         #endregion
 
         #region Updating UI info
+
         private void UpdateMainStatsLabel(BaseChannelJsonObject.Stream stream)
         {
             string text = String.Format("Viewers: {0} | Followers: {1} | Views: {2}", stream.viewers,
                 stream.channel.followers, stream.channel.views);
-            masterStatusStrip.Invoke((MethodInvoker)(() => mainStatsLabel.Text = text));
+            masterStatusStrip.Invoke((MethodInvoker) (() => mainStatsLabel.Text = text));
         }
 
         private void UpdateChannelBroadcastingConfigPanel(BaseChannelJsonObject.Stream stream)
@@ -352,9 +372,11 @@ namespace TwitchClient
             broadcastingInfoPanel.SetAvgFps(Math.Round(stream.average_fps, 2));
             broadcastingInfoPanel.SetSrcVidQual(stream.video_height);
         }
+
         #endregion
 
         #region Resizing behaviour
+
         private void MainForm_Resize(object sender, EventArgs e)
         {
             ResizeControls();
@@ -369,6 +391,7 @@ namespace TwitchClient
             // Followers text box
             followersTextBox.Size = new Size(Size.Width - 373, followersTextBox.Size.Height);
         }
+
         #endregion
 
         #region Chat bot settings UI events
@@ -389,9 +412,11 @@ namespace TwitchClient
             string commandName = echoMessage.Substring(0, colonIndex);
             string message = echoMessage.Substring(colonIndex + 1);
 
-            if (String.IsNullOrWhiteSpace(message) || String.IsNullOrWhiteSpace(commandName))  // Checking item format again
+            if (String.IsNullOrWhiteSpace(message) || String.IsNullOrWhiteSpace(commandName))
+                // Checking item format again
             {
-                MessageBox.Show("Invalid item, either the command name or the message is invalid.", "Add Echo Command - Error",
+                MessageBox.Show("Invalid item, either the command name or the message is invalid.",
+                    "Add Echo Command - Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -401,7 +426,9 @@ namespace TwitchClient
                 // Checking if we can add the entry to the dictionary
                 if (IrcBot.EchoCommands.ContainsKey(commandName))
                 {
-                    MessageBox.Show("The specified command name already exists, please choose another or deleted the current one.", "Add Echo Command - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(
+                        "The specified command name already exists, please choose another or deleted the current one.",
+                        "Add Echo Command - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -432,7 +459,8 @@ namespace TwitchClient
                 // Checking if we can add the entry to the dictionary
                 if (IrcBot.RandomNotifications.Contains(message))
                 {
-                    MessageBox.Show("The specified random notification already exists.", "Add Random Notification - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("The specified random notification already exists.",
+                        "Add Random Notification - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -454,7 +482,8 @@ namespace TwitchClient
 
                 if (index == -1)
                 {
-                    MessageBox.Show("No random notification item is selected.", "Remove Random Notification - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No random notification item is selected.", "Remove Random Notification - Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -472,7 +501,8 @@ namespace TwitchClient
 
                 if (index == -1)
                 {
-                    MessageBox.Show("No echo command item is selected.", "Remove Echo Command - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No echo command item is selected.", "Remove Echo Command - Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -480,9 +510,11 @@ namespace TwitchClient
                 IrcBot.EchoCommands.Remove(echoCommandsListBox.Items[index].ToString());
             }
         }
+
         #endregion
 
         #region Chat bot context menu
+
         public void SetUsersListContextMenuItemsEnabled(bool enabled)
         {
             // XXX surely this can be cleaner
@@ -502,7 +534,8 @@ namespace TwitchClient
         {
             if (chatUsersListBox.SelectedItem == null)
                 return;
-            string targetNick = chatUsersListBox.SelectedItem.ToString(); // We dont handle banning mods (@{nick}) since you cant as a mod
+            string targetNick = chatUsersListBox.SelectedItem.ToString();
+                // We dont handle banning mods (@{nick}) since you cant as a mod
             _ircBot.SendTimeout(targetNick, "1");
         }
 
@@ -545,6 +578,7 @@ namespace TwitchClient
             string targetNick = chatUsersListBox.SelectedItem.ToString();
             _ircBot.SendBan(targetNick);
         }
+
         private void unbanUserToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (chatUsersListBox.SelectedItem == null)
@@ -552,22 +586,33 @@ namespace TwitchClient
             string targetNick = chatUsersListBox.SelectedItem.ToString();
             _ircBot.SendUnban(targetNick);
         }
+
         #endregion
+
+        // TODO push all debug.writeline to hidden textbox in dev mode? + dev mode
+        // TODO ignore duplicate follower notifications
 
         private async void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Fetching json
-            var root = await GithubApi.GetLatestReleaseJsonObject();
+            LatestReleaseJsonObject.RootObject root = await GithubApi.GetLatestReleaseJsonObject();
 
             // Checking version
             if (root == null)
             {
-                MessageBox.Show("Unable to fetch updates. You can manually look for updates at: https://github.com/PureCS/twitch-client/releases", "Check for Updates - Error", MessageBoxButtons.OK,
+                MessageBox.Show(
+                    "Unable to fetch updates. You can manually look for updates at: https://github.com/PureCS/twitch-client/releases",
+                    "Check for Updates - Error", MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 return;
             }
+
+            // Spitting message
             string currentVersion = "v" + Application.ProductVersion;
-            string caption = currentVersion.Equals(root.tag_name, StringComparison.CurrentCultureIgnoreCase) ? "Your software is up to date!" : "Your software is out of date. The newest version is ";
+            string caption = currentVersion.Equals(root.tag_name, StringComparison.CurrentCultureIgnoreCase)
+                ? "Your software is up to date!"
+                : "Your software version mismatched, the current version is: " + root.tag_name + " (yours is " +
+                  currentVersion + ")";
             MessageBox.Show(caption, "Check for Updates", MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }

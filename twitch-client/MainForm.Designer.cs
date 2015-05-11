@@ -37,6 +37,8 @@ namespace TwitchClient
             this.updatingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toggleMainStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toggleFollowersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.broadcastingTabPage = new System.Windows.Forms.TabPage();
             this.followersTextBox = new System.Windows.Forms.TextBox();
@@ -57,7 +59,7 @@ namespace TwitchClient
             this.unbanUserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.chatBotSettingsTabPage = new System.Windows.Forms.TabPage();
             this.chatBotSettingsTabControl = new System.Windows.Forms.TabControl();
-            this.chatBotCredsTabPage = new System.Windows.Forms.TabPage();
+            this.credsTabPage = new System.Windows.Forms.TabPage();
             this.chatBotCredentialsPanel = new TwitchClient.Panels.ChatBot.ChatBotCredentialsPanel();
             this.echoCommandsTabPage = new System.Windows.Forms.TabPage();
             this.addEchoCommandButton = new System.Windows.Forms.Button();
@@ -73,8 +75,6 @@ namespace TwitchClient
             this.removeRandNotificationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.followersUpdateTimer = new System.Windows.Forms.Timer(this.components);
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.checkForUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.masterStatusStrip.SuspendLayout();
             this.masterMenuStrip.SuspendLayout();
             this.tabControl.SuspendLayout();
@@ -87,7 +87,7 @@ namespace TwitchClient
             this.chatUsersListContextMenu.SuspendLayout();
             this.chatBotSettingsTabPage.SuspendLayout();
             this.chatBotSettingsTabControl.SuspendLayout();
-            this.chatBotCredsTabPage.SuspendLayout();
+            this.credsTabPage.SuspendLayout();
             this.echoCommandsTabPage.SuspendLayout();
             this.echoCommandsListContextMenu.SuspendLayout();
             this.randomNotificationsTabPage.SuspendLayout();
@@ -145,6 +145,21 @@ namespace TwitchClient
             this.toggleFollowersToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.toggleFollowersToolStripMenuItem.Text = "Followers";
             this.toggleFollowersToolStripMenuItem.Click += new System.EventHandler(this.followersToolStripMenuItem_Click);
+            // 
+            // helpToolStripMenuItem
+            // 
+            this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.checkForUpdatesToolStripMenuItem});
+            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Text = "Help";
+            // 
+            // checkForUpdatesToolStripMenuItem
+            // 
+            this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
+            this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.checkForUpdatesToolStripMenuItem.Text = "Check for Updates";
+            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
             // 
             // tabControl
             // 
@@ -334,7 +349,7 @@ namespace TwitchClient
             // 
             // chatBotSettingsTabControl
             // 
-            this.chatBotSettingsTabControl.Controls.Add(this.chatBotCredsTabPage);
+            this.chatBotSettingsTabControl.Controls.Add(this.credsTabPage);
             this.chatBotSettingsTabControl.Controls.Add(this.echoCommandsTabPage);
             this.chatBotSettingsTabControl.Controls.Add(this.randomNotificationsTabPage);
             this.chatBotSettingsTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -344,16 +359,16 @@ namespace TwitchClient
             this.chatBotSettingsTabControl.Size = new System.Drawing.Size(541, 373);
             this.chatBotSettingsTabControl.TabIndex = 0;
             // 
-            // chatBotCredsTabPage
+            // credsTabPage
             // 
-            this.chatBotCredsTabPage.Controls.Add(this.chatBotCredentialsPanel);
-            this.chatBotCredsTabPage.Location = new System.Drawing.Point(4, 22);
-            this.chatBotCredsTabPage.Name = "chatBotCredsTabPage";
-            this.chatBotCredsTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.chatBotCredsTabPage.Size = new System.Drawing.Size(533, 347);
-            this.chatBotCredsTabPage.TabIndex = 0;
-            this.chatBotCredsTabPage.Text = "Bot Credentials";
-            this.chatBotCredsTabPage.UseVisualStyleBackColor = true;
+            this.credsTabPage.Controls.Add(this.chatBotCredentialsPanel);
+            this.credsTabPage.Location = new System.Drawing.Point(4, 22);
+            this.credsTabPage.Name = "credsTabPage";
+            this.credsTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.credsTabPage.Size = new System.Drawing.Size(533, 347);
+            this.credsTabPage.TabIndex = 0;
+            this.credsTabPage.Text = "Bot Credentials";
+            this.credsTabPage.UseVisualStyleBackColor = true;
             // 
             // chatBotCredentialsPanel
             // 
@@ -478,21 +493,6 @@ namespace TwitchClient
             this.followersUpdateTimer.Interval = 17500;
             this.followersUpdateTimer.Tick += new System.EventHandler(this.followersUpdateTimer_Tick);
             // 
-            // helpToolStripMenuItem
-            // 
-            this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.checkForUpdatesToolStripMenuItem});
-            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
-            this.helpToolStripMenuItem.Text = "Help";
-            // 
-            // checkForUpdatesToolStripMenuItem
-            // 
-            this.checkForUpdatesToolStripMenuItem.Name = "checkForUpdatesToolStripMenuItem";
-            this.checkForUpdatesToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            this.checkForUpdatesToolStripMenuItem.Text = "Check for Updates";
-            this.checkForUpdatesToolStripMenuItem.Click += new System.EventHandler(this.checkForUpdatesToolStripMenuItem_Click);
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -520,7 +520,7 @@ namespace TwitchClient
             this.chatUsersListContextMenu.ResumeLayout(false);
             this.chatBotSettingsTabPage.ResumeLayout(false);
             this.chatBotSettingsTabControl.ResumeLayout(false);
-            this.chatBotCredsTabPage.ResumeLayout(false);
+            this.credsTabPage.ResumeLayout(false);
             this.echoCommandsTabPage.ResumeLayout(false);
             this.echoCommandsTabPage.PerformLayout();
             this.echoCommandsListContextMenu.ResumeLayout(false);
@@ -554,7 +554,7 @@ namespace TwitchClient
         private System.Windows.Forms.RichTextBox chatRichTextBox;
         private System.Windows.Forms.ListBox chatUsersListBox;
         private System.Windows.Forms.TabControl chatBotSettingsTabControl;
-        private System.Windows.Forms.TabPage chatBotCredsTabPage;
+        private System.Windows.Forms.TabPage credsTabPage;
         private Panels.ChatBot.ChatBotCredentialsPanel chatBotCredentialsPanel;
         private System.Windows.Forms.TabPage echoCommandsTabPage;
         private System.Windows.Forms.Button addEchoCommandButton;
